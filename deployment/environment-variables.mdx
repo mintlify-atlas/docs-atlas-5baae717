@@ -1,0 +1,150 @@
+---
+title: "Environment variables"
+description: "All environment variables supported by FluidCalendar, grouped by category."
+---
+
+FluidCalendar is configured through environment variables loaded from a `.env` file at startup. Copy `.env.example` to `.env` and edit it before running `docker compose up`.
+
+```bash
+cp .env.example .env
+```
+
+<Note>
+  Several integration credentials (Google OAuth, Outlook/Azure, Resend API key) can also be configured through the Settings UI at **Settings › System** after you first log in. Values set in the UI take precedence; environment variables serve as a fallback.
+</Note>
+
+## Database
+
+<ParamField path="DATABASE_URL" type="string" required>
+  PostgreSQL connection string. When using the bundled `docker-compose.yml`, the `db` hostname resolves to the Compose service automatically.
+
+  ```
+  postgresql://fluid:fluid@db:5432/fluid_calendar
+  ```
+</ParamField>
+
+## Authentication
+
+<ParamField path="NEXTAUTH_SECRET" type="string" required>
+  Random string used to sign and verify session tokens. Must be at least 32 characters. If this value changes, all active sessions are invalidated.
+
+  Generate a suitable value with:
+  ```bash
+  openssl rand -base64 32
+  ```
+</ParamField>
+
+<ParamField path="NEXTAUTH_URL" type="string" required>
+  The canonical URL of your FluidCalendar deployment. Used by NextAuth.js to construct redirect URIs and other absolute URLs. Must match the domain where your app is served.
+
+  ```
+  http://localhost:3000          # local development
+  https://calendar.example.com  # production
+  ```
+</ParamField>
+
+## App URLs
+
+<ParamField path="NEXT_PUBLIC_APP_URL" type="string" required>
+  Public base URL of the application. Exposed to the browser (hence `NEXT_PUBLIC_`). Should match `NEXTAUTH_URL`.
+
+  ```
+  http://localhost:3000
+  ```
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SITE_URL" type="string" required>
+  Public site URL used for generating shareable links and canonical references. Typically the same value as `NEXT_PUBLIC_APP_URL`.
+
+  ```
+  http://localhost:3000
+  ```
+</ParamField>
+
+## Google OAuth (Google Calendar integration)
+
+These variables enable sign-in with Google and Google Calendar sync. They can alternatively be set via **Settings › System › Google Calendar Integration** in the UI.
+
+<ParamField path="GOOGLE_CLIENT_ID" type="string">
+  OAuth 2.0 Client ID from the Google Cloud Console. Looks like `xxxxxxxxxxxx-xxxx.apps.googleusercontent.com`.
+</ParamField>
+
+<ParamField path="GOOGLE_CLIENT_SECRET" type="string">
+  OAuth 2.0 Client Secret paired with `GOOGLE_CLIENT_ID`.
+</ParamField>
+
+<Note>
+  Add `https://your-domain.com/api/calendar/google` and `https://your-domain.com/api/auth/callback/google` to the Authorized Redirect URIs in your Google Cloud OAuth credentials.
+</Note>
+
+## Outlook / Azure (Outlook Calendar integration)
+
+These variables enable Outlook Calendar sync via Microsoft Graph. They can alternatively be set via **Settings › System › Outlook Calendar Integration** in the UI.
+
+<ParamField path="AZURE_AD_CLIENT_ID" type="string">
+  Application (client) ID of your registered Azure AD app.
+</ParamField>
+
+<ParamField path="AZURE_AD_CLIENT_SECRET" type="string">
+  Client secret generated in the **Certificates & secrets** section of your Azure app registration.
+</ParamField>
+
+<ParamField path="AZURE_AD_TENANT_ID" type="string">
+  Azure AD tenant ID. Use `common` to allow any Microsoft personal or organizational account, or supply a specific tenant GUID to restrict access.
+
+  ```
+  common
+  ```
+</ParamField>
+
+<Note>
+  Add `https://your-domain.com/api/auth/callback/azure-ad` to the Redirect URIs in your Azure app's Authentication settings.
+</Note>
+
+## Email (Resend)
+
+FluidCalendar uses [Resend](https://resend.com) to send transactional emails such as daily digest notifications and password reset emails. The API key can alternatively be set via **Settings › System** in the UI.
+
+<ParamField path="RESEND_API_KEY" type="string">
+  API key from your Resend dashboard. Leave empty to disable email sending.
+
+  ```
+  re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  ```
+</ParamField>
+
+<ParamField path="RESEND_FROM_EMAIL" type="string">
+  The "From" address used when sending emails. Must be a domain you have verified with Resend.
+
+  ```
+  noreply@example.com
+  ```
+</ParamField>
+
+## SaaS features
+
+<ParamField path="NEXT_PUBLIC_ENABLE_SAAS_FEATURES" type="boolean" default="false">
+  Set to `true` only when running the private SaaS build of FluidCalendar. The open-source release ships with this disabled. Enabling it without the corresponding SaaS source code will have no effect.
+
+  ```
+  false
+  ```
+</ParamField>
+
+## Summary table
+
+| Variable | Required | Default | Configurable in UI |
+|---|---|---|---|
+| `DATABASE_URL` | Yes | — | No |
+| `NEXTAUTH_SECRET` | Yes | — | No |
+| `NEXTAUTH_URL` | Yes | — | No |
+| `NEXT_PUBLIC_APP_URL` | Yes | — | No |
+| `NEXT_PUBLIC_SITE_URL` | Yes | — | No |
+| `GOOGLE_CLIENT_ID` | No | — | Yes |
+| `GOOGLE_CLIENT_SECRET` | No | — | Yes |
+| `AZURE_AD_CLIENT_ID` | No | — | Yes |
+| `AZURE_AD_CLIENT_SECRET` | No | — | Yes |
+| `AZURE_AD_TENANT_ID` | No | `common` | Yes |
+| `RESEND_API_KEY` | No | — | Yes |
+| `RESEND_FROM_EMAIL` | No | — | No |
+| `NEXT_PUBLIC_ENABLE_SAAS_FEATURES` | No | `false` | No |

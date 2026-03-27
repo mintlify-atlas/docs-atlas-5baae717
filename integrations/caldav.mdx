@@ -1,0 +1,198 @@
+---
+title: "CalDAV"
+description: "Connect any CalDAV-compatible calendar server — including Nextcloud, Apple iCloud, and Fastmail — to FluidCalendar."
+---
+
+CalDAV is an open standard (RFC 4791) for storing and syncing calendar data over HTTP. Any service that supports CalDAV can be connected to FluidCalendar without any cloud provider setup or OAuth application registration.
+
+## Supported services
+
+FluidCalendar works with any server that implements the CalDAV standard, including:
+
+<CardGroup cols={2}>
+  <Card title="Nextcloud" icon="server">
+    Self-hosted groupware suite with a full CalDAV calendar server
+  </Card>
+  <Card title="Apple iCloud" icon="apple">
+    iCloud Calendar available to all Apple ID holders
+  </Card>
+  <Card title="Fastmail" icon="envelope">
+    Email and calendar service with strong CalDAV support
+  </Card>
+  <Card title="Other servers" icon="calendar">
+    Any server implementing RFC 4791: Radicale, Baikal, DAViCal, Zimbra, and more
+  </Card>
+</CardGroup>
+
+## Add a CalDAV account
+
+<Steps>
+  <Step title="Find your CalDAV server URL">
+    Locate the CalDAV URL for your service. Common URLs for popular services are listed in the [server URLs reference](#common-caldav-server-urls) below.
+
+    The URL typically points to a principal or home-set path on the server, for example:
+
+    ```
+    https://nextcloud.example.com/remote.php/dav/
+    ```
+  </Step>
+
+  <Step title="Open the integration settings">
+    In FluidCalendar, go to **Settings → Integrations**.
+
+    Click **Add CalDAV Account**.
+  </Step>
+
+  <Step title="Enter your credentials">
+    Fill in the following fields:
+
+    | Field | Description |
+    |---|---|
+    | **Server URL** | The CalDAV endpoint for your service (see [common URLs](#common-caldav-server-urls)) |
+    | **Username** | Your account username or email address |
+    | **Password** | Your account password or an app-specific password |
+
+    <Warning>
+      Some services (Apple iCloud, Google, and others with two-factor authentication enabled) require an **app-specific password** rather than your main account password. Generate one from your account's security settings.
+    </Warning>
+  </Step>
+
+  <Step title="Discover and select calendars">
+    After saving your credentials, FluidCalendar connects to the server and discovers all available calendars on your account.
+
+    Each discovered calendar appears in the calendar sidebar. Toggle the checkbox next to a calendar to show or hide it.
+  </Step>
+</Steps>
+
+## Common CalDAV server URLs
+
+<AccordionGroup>
+  <Accordion title="Nextcloud">
+    ```
+    https://your-nextcloud.example.com/remote.php/dav/
+    ```
+
+    Replace `your-nextcloud.example.com` with your Nextcloud server's domain.
+
+    If you host Nextcloud in a subdirectory:
+
+    ```
+    https://example.com/nextcloud/remote.php/dav/
+    ```
+  </Accordion>
+
+  <Accordion title="Apple iCloud">
+    ```
+    https://caldav.icloud.com
+    ```
+
+    Use your Apple ID email as the username. You must generate an **app-specific password** from [appleid.apple.com](https://appleid.apple.com) — your main Apple ID password will not work.
+  </Accordion>
+
+  <Accordion title="Fastmail">
+    ```
+    https://caldav.fastmail.com/dav/
+    ```
+
+    Use your Fastmail email address as the username and your Fastmail password. If you have two-factor authentication enabled, generate an app password from **Settings → Privacy & Security → App passwords**.
+  </Accordion>
+
+  <Accordion title="Radicale (self-hosted)">
+    ```
+    https://your-radicale.example.com/
+    ```
+
+    The default Radicale path depends on your installation. Check your `config` file for the `base_prefix` setting.
+  </Accordion>
+
+  <Accordion title="Baikal (self-hosted)">
+    ```
+    https://your-baikal.example.com/dav.php/
+    ```
+
+    Replace the domain with your Baikal server's domain.
+  </Accordion>
+
+  <Accordion title="Zimbra">
+    ```
+    https://mail.example.com/dav/your-username@example.com/
+    ```
+
+    Replace `mail.example.com` with your Zimbra server and include your full email address in the path.
+  </Accordion>
+</AccordionGroup>
+
+## How sync works
+
+FluidCalendar uses the `tsdav` library to communicate with CalDAV servers using Basic authentication.
+
+### Calendar discovery
+
+When you add a CalDAV account, FluidCalendar fetches the principal URL from the server and then retrieves the list of available calendars. Each calendar is stored as a separate feed.
+
+### Event fetching and sync
+
+When syncing a calendar, FluidCalendar queries the server for events within a time range: **1 year in the past through 1 year in the future**. Events are fetched as iCalendar (`.ics`) data and parsed using the `ical.js` library.
+
+FluidCalendar stores all events in its local database after each sync. During a full sync, existing events for a feed are replaced with the freshly fetched set.
+
+### Recurring events
+
+For recurring events, FluidCalendar reads the `RRULE` property from the iCalendar data to identify the master event, then expands it locally into individual instances covering the sync time window. Modified instances (`RECURRENCE-ID`) are tracked separately.
+
+### Creating, updating, and deleting events
+
+FluidCalendar writes changes back to the CalDAV server using HTTP `PUT` (for create and update) and `DELETE` requests. Events are identified by a UID-based URL in the format:
+
+```
+{calendar-path}/{event-uid}.ics
+```
+
+If the primary HTTP method fails, FluidCalendar falls back to the standard CalDAV `createObject`, `updateObject`, or `deleteObject` methods for broader server compatibility.
+
+<Note>
+  Deleting a single instance of a recurring event adds an `EXDATE` property to the master event's iCalendar data rather than deleting the `.ics` file. Deleting the entire series removes the master `.ics` file from the server.
+</Note>
+
+## Managing your calendars
+
+Once connected, each CalDAV calendar appears in the sidebar as a feed. You can:
+
+- **Show or hide** a calendar by toggling its checkbox.
+- **Manually sync** a calendar by clicking the sync icon next to it.
+- **Remove** a calendar by clicking the trash icon.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authentication failed">
+    Double-check your username and password. If the service uses two-factor authentication, you must use an **app-specific password** instead of your main account password. See the setup instructions for your service provider.
+  </Accordion>
+
+  <Accordion title="No calendars found after connecting">
+    The server URL may not point to the correct principal or home-set path. Try using the root URL (for example, `https://example.com/dav/`) and let FluidCalendar discover the calendars automatically. Also verify that your account has at least one calendar on the server.
+  </Accordion>
+
+  <Accordion title="Events are missing or out of date">
+    FluidCalendar syncs a fixed window of 1 year back and 1 year forward. Events outside this range will not appear. To pull the latest data, click the sync icon next to the calendar in the sidebar.
+  </Accordion>
+
+  <Accordion title="SSL certificate errors">
+    If your CalDAV server uses a self-signed certificate, the connection may fail. Ensure your server presents a valid, publicly trusted TLS certificate. For development or internal servers, consult your server's documentation for certificate configuration.
+  </Accordion>
+
+  <Accordion title="Events fail to create or update">
+    Some CalDAV servers have strict requirements on the format of event URLs or iCalendar data. FluidCalendar attempts a direct `PUT` request first, then falls back to the standard CalDAV method. If both fail, check your server logs for the specific error returned.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Google Calendar" icon="google" href="/integrations/google-calendar">
+    Connect your Google Calendar account
+  </Card>
+  <Card title="Outlook Calendar" icon="microsoft" href="/integrations/outlook-calendar">
+    Connect your Microsoft Outlook or Office 365 calendar
+  </Card>
+</CardGroup>

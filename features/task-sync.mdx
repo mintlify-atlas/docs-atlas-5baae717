@@ -1,0 +1,180 @@
+---
+title: "Task sync"
+description: "Sync tasks bidirectionally with external providers like Outlook Tasks. Map external task lists to FluidCalendar projects and keep both sides up to date automatically."
+---
+
+FluidCalendar's task sync system lets you connect external task services and keep tasks in sync in both directions. Changes made in FluidCalendar propagate out to the external provider, and changes made in the external provider are pulled back in.
+
+## Architecture overview
+
+The sync system is built around three core concepts:
+
+- **TaskProvider** — represents a connected account for an external task service (e.g., your Outlook account). Stores credentials, sync interval, and provider-specific settings.
+- **TaskListMapping** — links one external task list to one FluidCalendar project. Controls sync direction and tracks the last sync time.
+- **TaskChange** — a log entry created every time a task is created, updated, or deleted locally. During sync, unprocessed changes are replayed against the external provider.
+
+```
+ConnectedAccount
+      │
+      ▼
+ TaskProvider  (one per account/service)
+      │
+      ├── TaskListMapping ──► Project
+      │         │
+      │         └── TaskChange log
+      └── TaskListMapping ──► Project
+```
+
+### Sync flow
+
+1. **Outgoing**: Unsynced `TaskChange` records for a mapping are replayed — creates are pushed to the external list, updates are patched, and deletes are removed.
+2. **Incoming**: External tasks are fetched and compared to local tasks by `externalTaskId`. New external tasks are imported; existing ones are compared by timestamp (`externalUpdatedAt` vs local `updatedAt`) and the newer version wins.
+3. **Linking**: Local tasks without an `externalTaskId` are matched to external tasks by title (and optionally due date). If a match is found the task is linked; otherwise a new local task is created for the external task, and a new external task is created for the unlinked local task.
+4. **Deletions**: Local tasks that have an `externalTaskId` but are no longer present in the external list are deleted locally, unless there are recent local changes (within 24 hours) that indicate the task is still active.
+
+## Setting up Outlook Tasks sync
+
+<Note>
+  You need a connected Outlook account before you can add an Outlook task provider. Go to **Settings → Accounts** and connect your Microsoft account first.
+</Note>
+
+<Steps>
+  <Step title="Open Task Sync settings">
+    Navigate to **Settings → Task Sync**.
+  </Step>
+  <Step title="Add a provider">
+    If no providers are configured yet, you'll see an alert. Click **Add Provider** to open the provider dialog.
+  </Step>
+  <Step title="Name the provider and select an account">
+    Enter a descriptive name (e.g., `Work Outlook Tasks`) and select the Outlook account from the dropdown. Only accounts that aren't already task providers are shown.
+
+    Click **Add Provider** to save.
+  </Step>
+  <Step title="Select the provider">
+    The new provider appears in the provider dropdown. Select it to load its task lists.
+  </Step>
+  <Step title="Map task lists to projects">
+    Switch to the **Task Lists** tab. Each Outlook task list is shown as a card.
+
+    For each list you want to sync:
+    - Select an existing FluidCalendar project from the **Map to existing project** dropdown, **or**
+    - Click **Create New Project** to automatically create a project with the same name as the task list.
+
+    A `Mapped` badge appears on the card once the mapping is saved.
+  </Step>
+  <Step title="Trigger an initial sync">
+    Click **Sync Now** on the provider details card, or click the **Sync** button on an individual task list card. Tasks from the external list will be imported into the mapped project.
+  </Step>
+</Steps>
+
+## Sync direction
+
+Each `TaskListMapping` has a `direction` setting that controls how changes flow:
+
+| Direction | What it does |
+|-----------|-------------|
+| `incoming` | External changes are pulled into FluidCalendar. Local changes are not pushed out. |
+| `outgoing` | Local changes are pushed to the external list. External changes are not pulled in. |
+| `bidirectional` | Changes flow in both directions. The newer version wins on conflict. |
+
+New mappings created through the UI default to `bidirectional`.
+
+## Sync intervals
+
+The `TaskProvider` model has a `syncInterval` field that controls how often automatic background syncs run:
+
+| Interval | Behavior |
+|----------|----------|
+| `hourly` | Background job runs once per hour |
+| `daily` | Background job runs once per day |
+| `manual` | No automatic sync — you trigger syncs yourself |
+
+The current sync interval is shown in the **Provider Details** card under **Sync Interval**.
+
+## Triggering a manual sync
+
+You can trigger a sync at any time from two places:
+
+**From Settings → Task Sync:**
+- Click **Sync Now** on the provider details card to sync all mapped lists for that provider.
+- Click **Sync** on an individual task list card to sync only that mapping.
+
+**From the Projects sidebar (Tasks page):**
+- Hover over a project that has a task list mapping. A sync icon appears.
+- Click the icon to trigger a bidirectional sync for that project's mapping.
+
+<Tip>
+  The sync icon in the project sidebar spins while a sync is in progress. A toast notification confirms success or failure.
+</Tip>
+
+## Change tracking
+
+Every time a task is created, updated, or deleted in FluidCalendar, a `TaskChange` record is written to the database. Each record contains:
+
+| Field | Description |
+|-------|-------------|
+| `taskId` | The local task that changed |
+| `changeType` | `CREATE`, `UPDATE`, or `DELETE` |
+| `changeData` | A JSON diff of the changed fields (or external IDs for deletes) |
+| `synced` | `false` until the change has been propagated to the external provider |
+| `mappingId` | The task list mapping this change is associated with |
+| `timestamp` | When the change occurred |
+
+During sync, all `synced: false` changes for a mapping are processed in timestamp order. Once a change has been sent to the external provider, it is marked `synced: true`.
+
+This approach means that even if your sync interval is set to daily, no local changes are lost — they queue up in the `TaskChange` table and are flushed on the next sync.
+
+## Conflict resolution
+
+When a task exists in both FluidCalendar and the external provider and both sides have been modified since the last sync, FluidCalendar uses a **latest-wins** strategy:
+
+- The `updatedAt` timestamp of the local task is compared to the `externalUpdatedAt` field (which stores the last-modified time from the external system).
+- Whichever side has the later timestamp is treated as the authoritative version.
+- The other side is updated to match.
+
+<Note>
+  Manual conflict resolution UI (where you can choose which version to keep field by field) is planned for a future release.
+</Note>
+
+## Provider details card
+
+After selecting a provider, the **Provider Details** card shows:
+
+- **Provider Type** — e.g., `OUTLOOK`
+- **Account** — the email address of the connected account
+- **Last Synced** — timestamp of the most recent successful sync (or "Never")
+- **Sync Interval** — the configured automatic sync frequency
+- Any sync errors, shown as a destructive alert
+
+From this card you can also **Delete Provider**, which removes the provider and all its task list mappings. Existing local tasks are not deleted.
+
+## Supported and planned providers
+
+<CardGroup cols={2}>
+  <Card title="Outlook Tasks" icon="microsoft">
+    **Available now.** Connects via Microsoft Graph API using an Outlook connected account. Supports bidirectional sync of task lists.
+  </Card>
+  <Card title="Google Tasks" icon="google">
+    **Available now.** Connects via Google Tasks API using a Google connected account. Supports bidirectional sync of task lists.
+  </Card>
+  <Card title="CalDAV Tasks" icon="calendar">
+    **Planned.** Will support any CalDAV-compatible server (Nextcloud, Radicale, Fastmail, etc.).
+  </Card>
+  <Card title="Asana, Todoist, Jira" icon="grid">
+    **Planned.** Additional providers will follow the same `TaskProviderInterface` contract and become available as they're implemented.
+  </Card>
+</CardGroup>
+
+## Removing a sync mapping
+
+To stop syncing a specific task list:
+
+1. Go to **Settings → Task Sync**.
+2. Select the provider.
+3. On the **Task Lists** tab, find the mapped list and click **Remove Mapping**.
+
+This removes the `TaskListMapping` record. Existing local tasks that were imported from that list remain, but they are no longer linked to the external list and won't be synced.
+
+<Warning>
+  Tasks that were created via sync keep their `externalTaskId` and `source` fields after a mapping is removed. If you re-create the mapping later, FluidCalendar will attempt to re-link them by matching `externalTaskId`.
+</Warning>

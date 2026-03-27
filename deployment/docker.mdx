@@ -1,0 +1,181 @@
+---
+title: "Docker deployment"
+description: "Deploy FluidCalendar using Docker and Docker Compose — the recommended way to self-host."
+---
+
+Docker is the recommended way to run FluidCalendar in production. The official image is published to Docker Hub as `eibrahim/fluid-calendar:latest` and bundles the Next.js application along with an entrypoint script that automatically runs database migrations on every start.
+
+<Warning>
+  FluidCalendar is in active development and contains known bugs. It is not yet recommended for critical production workloads. Please [report issues](https://github.com/dotnetfactory/fluid-calendar/issues) as you find them.
+</Warning>
+
+## Quick start
+
+<Steps>
+  <Step title="Install Docker">
+    Make sure [Docker Desktop](https://docs.docker.com/get-docker/) (or Docker Engine + Compose plugin) is installed and running on your machine.
+  </Step>
+
+  <Step title="Get the project files">
+    Clone the repository to get the `docker-compose.yml` and `.env.example` files. You only need these two files to run the application — you do not need to build anything locally.
+
+    ```bash
+    git clone https://github.com/dotnetfactory/fluid-calendar.git
+    cd fluid-calendar
+    ```
+
+    Alternatively, download just the `docker-compose.yml` from the repository if you prefer not to clone the full source.
+  </Step>
+
+  <Step title="Create your environment file">
+    Copy the example environment file and open it in your editor:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    At a minimum, set these three values:
+
+    ```bash
+    DATABASE_URL=postgresql://fluid:fluid@db:5432/fluid_calendar
+    NEXTAUTH_URL=http://localhost:3000
+    NEXTAUTH_SECRET=your-random-secret-key-min-32-chars
+    ```
+
+    <Tip>
+      Generate a strong `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
+    </Tip>
+  </Step>
+
+  <Step title="Start the application">
+    ```bash
+    docker compose up -d
+    ```
+
+    Docker Compose will:
+    1. Pull the `postgres:16-alpine` and `eibrahim/fluid-calendar:latest` images if not cached.
+    2. Start the PostgreSQL database and wait until its health check passes.
+    3. Start the application container, which runs `prisma migrate deploy` before launching the server.
+  </Step>
+
+  <Step title="Open FluidCalendar">
+    Visit [http://localhost:3000](http://localhost:3000) in your browser. The first user to sign up automatically becomes the admin.
+  </Step>
+</Steps>
+
+## docker-compose.yml explained
+
+The default `docker-compose.yml` defines two services:
+
+```yaml
+services:
+  app:
+    image: eibrahim/fluid-calendar:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=fluid
+      - POSTGRES_PASSWORD=fluid
+      - POSTGRES_DB=fluid_calendar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluid -d fluid_calendar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+```
+
+| Key | Description |
+|---|---|
+| `app.image` | Pre-built production image from Docker Hub. |
+| `app.env_file` | Loads all variables from your `.env` file into the container. |
+| `app.depends_on` | Waits for the database health check to pass before starting the app. |
+| `db.volumes` | Persists PostgreSQL data in a named Docker volume so it survives container restarts. |
+| `db.healthcheck` | Uses `pg_isready` to confirm the database is accepting connections. |
+| `restart: unless-stopped` | Both services restart automatically after a crash or host reboot unless explicitly stopped. |
+
+## Production deployment considerations
+
+<CardGroup cols={2}>
+  <Card title="Change the database credentials" icon="key">
+    The default `POSTGRES_USER=fluid` / `POSTGRES_PASSWORD=fluid` credentials are fine for local development. In production, use strong, unique credentials and update `DATABASE_URL` accordingly.
+  </Card>
+  <Card title="Set a strong NEXTAUTH_SECRET" icon="lock">
+    This secret is used to sign session tokens. If it changes or is weak, all existing sessions are invalidated. Use at least 32 random characters.
+  </Card>
+  <Card title="Use a reverse proxy" icon="globe">
+    Place Nginx, Caddy, or a cloud load balancer in front of the app container to handle TLS termination. Set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your public HTTPS domain.
+  </Card>
+  <Card title="Back up the Docker volume" icon="database">
+    The `postgres_dev_data` volume holds all your data. Set up regular snapshots or use `pg_dump` to create backups before updates.
+  </Card>
+</CardGroup>
+
+### Exposing to the internet
+
+Update your `.env` to reflect your public domain before starting the stack:
+
+```bash
+NEXTAUTH_URL=https://calendar.example.com
+NEXT_PUBLIC_APP_URL=https://calendar.example.com
+NEXT_PUBLIC_SITE_URL=https://calendar.example.com
+```
+
+Also update the Authorized Redirect URIs in your Google Cloud and Azure app registrations to include your production domain.
+
+## Updating the image
+
+Pull the latest image and restart the stack. The entrypoint script runs `prisma migrate deploy` automatically, so schema migrations are applied on every startup.
+
+```bash
+docker pull eibrahim/fluid-calendar:latest
+docker compose up -d
+```
+
+<Note>
+  Always back up your database before updating, especially during the early development phase when schema changes may be significant.
+</Note>
+
+## Useful Docker commands
+
+```bash
+# Follow live application logs
+docker compose logs -f
+
+# Follow logs for the app container only
+docker compose logs -f app
+
+# Stop the application (keeps the data volume)
+docker compose down
+
+# Update to the latest image
+docker pull eibrahim/fluid-calendar:latest
+docker compose up -d
+
+# Open a PostgreSQL prompt
+docker compose exec db psql -U fluid -d fluid_calendar
+
+# Reset the database — DELETES ALL DATA
+docker compose down -v
+docker compose up -d
+```
+
+<Warning>
+  `docker compose down -v` removes the named `postgres_dev_data` volume and permanently deletes all stored data. Only run this if you want a completely fresh instance.
+</Warning>

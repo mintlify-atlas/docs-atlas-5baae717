@@ -1,97 +1,56 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "FluidCalendar"
+description: "Intelligent task scheduling and calendar management. An open-source alternative to Motion."
 ---
 
-## Setting up
+## Welcome to FluidCalendar
 
-Get your documentation site up and running in minutes.
+FluidCalendar automatically schedules your tasks into your calendar based on your work hours, energy levels, and existing events — so you always know what to work on next.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get running in minutes with Docker
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Auto-scheduling" icon="wand-magic-sparkles" href="/features/auto-scheduling">
+    Learn how intelligent scheduling works
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Google Calendar" icon="google" href="/integrations/google-calendar">
+    Connect your Google Calendar
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Task management" icon="list-check" href="/features/task-management">
+    Manage tasks with priorities and projects
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is FluidCalendar?
 
-Everything you need to create world-class documentation.
+FluidCalendar combines smart automatic task scheduling with a full-featured calendar. It finds optimal time slots for your tasks based on your work hours, energy levels, and existing events — so you spend less time planning and more time executing.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={3}>
+  <Card title="Calendar sync" icon="calendar">
+    Two-way sync with Google, Outlook, and CalDAV
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="Smart scheduling" icon="brain">
+    Tasks scheduled around your existing events
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Focus mode" icon="bullseye">
+    Work through tasks one at a time
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Get started
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Steps>
+  <Step title="Deploy with Docker">
+    Run `docker compose up -d` to start FluidCalendar and PostgreSQL. See the [quick start guide](/quickstart).
+  </Step>
+  <Step title="Connect your calendar">
+    Link your Google Calendar or Outlook account so FluidCalendar can see your existing events.
+  </Step>
+  <Step title="Configure work hours">
+    Set your working days, hours, and energy levels in **Settings → Auto-Schedule**.
+  </Step>
+  <Step title="Add tasks and schedule">
+    Create tasks with estimated durations, then hit **Auto-schedule** to fill your calendar.
+  </Step>
+</Steps>

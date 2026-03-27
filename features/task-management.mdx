@@ -1,0 +1,124 @@
+---
+title: "Task management"
+description: "Create, organize, and schedule tasks in FluidCalendar using list view, board view, recurring rules, and auto-scheduling."
+---
+
+Tasks are the core unit of work in FluidCalendar. Each task can carry rich metadata — priority, energy level, preferred time of day — that the auto-scheduler uses to place work into your calendar at the right moment.
+
+## Task fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Required. The name of the task. |
+| `description` | string | Optional free-text notes or details. |
+| `status` | enum | Current state: `todo`, `in_progress`, or `completed`. |
+| `dueDate` | date | The deadline by which the task must be finished. |
+| `startDate` | date | The earliest date the task can be scheduled. Tasks won't appear or be scheduled before this date. |
+| `duration` | number | Estimated time to complete the task, in minutes. Used by auto-scheduling to block calendar time. |
+| `priority` | enum | Urgency level: `high`, `medium`, `low`, or `none`. |
+| `energyLevel` | enum | Cognitive demand: `high`, `medium`, or `low`. Used to match tasks to your energy windows. |
+| `preferredTime` | enum | Best time of day: `morning`, `afternoon`, or `evening`. |
+| `isAutoScheduled` | boolean | When enabled, the scheduler automatically places this task on your calendar. |
+| `scheduleLocked` | boolean | When enabled, prevents the auto-scheduler from moving an already-placed task. |
+| `isRecurring` | boolean | Whether this task repeats on a schedule. |
+| `recurrenceRule` | string | An RFC 5545 RRule string describing the recurrence pattern. |
+| `postponedUntil` | date | Snooze a task until a future date. The task won't appear in your list until then. |
+
+## Task views
+
+FluidCalendar offers two ways to view your tasks, switchable from the tasks page toolbar.
+
+<CardGroup cols={2}>
+  <Card title="List view" icon="list">
+    A sortable, filterable table showing all task fields at a glance. Columns include status, title, priority, energy, preferred time, due date, duration, project, schedule, and start date. Click any column header to sort ascending or descending.
+  </Card>
+  <Card title="Board view" icon="columns">
+    A Kanban board with three columns: **Todo**, **In Progress**, and **Completed**. Drag and drop tasks between columns to update their status. Cards show tags, energy level, preferred time, duration, due date, project, and scheduled time.
+  </Card>
+</CardGroup>
+
+### Filtering tasks
+
+Both views share the same filter bar at the top of the task list:
+
+- **Status** — filter by `Todo`, `In Progress`, or `Completed`
+- **Energy** — show only tasks matching a specific energy level
+- **Time** — show only tasks with a preferred time of day
+- **Search** — full-text search across task title, description, and tag names
+- **Hide upcoming tasks** — suppress tasks whose `startDate` is in the future
+
+Click **Clear Filters** to reset all active filters at once.
+
+## Creating a task
+
+<Steps>
+  <Step title="Open the new task dialog">
+    Click the **+** button in the task page header, or click **New Task** from within a project. If you're inside a project, the task will be pre-assigned to that project.
+  </Step>
+  <Step title="Fill in the required fields">
+    Enter a **Title** (required). Add an optional **Description** for notes.
+  </Step>
+  <Step title="Set scheduling hints">
+    Choose a **Status**, **Due Date**, **Start Date**, **Duration**, **Priority**, **Energy Level**, and **Preferred Time**. These fields inform auto-scheduling but are all optional.
+  </Step>
+  <Step title="Configure auto-scheduling">
+    Toggle **Auto-Schedule** on to let FluidCalendar place this task on your calendar automatically. If the task already has a scheduled slot and you want to keep it fixed, enable **Lock Schedule** to prevent rescheduling.
+  </Step>
+  <Step title="Assign a project and tags">
+    Select an existing **Project** from the dropdown, or leave it unassigned. Click tag pills to apply existing tags, or type a name and pick a color to create a new tag inline.
+  </Step>
+  <Step title="Save">
+    Click **Create**. The task appears immediately in the task list.
+  </Step>
+</Steps>
+
+## Editing a task
+
+Click the pencil icon on any task row or card to open the edit dialog. All fields are pre-populated with the current values. Make changes and click **Update** to save.
+
+You can also change a task's status directly from the list view by clicking the status badge in the row, or by dragging the card to a different column in board view.
+
+## Completing a task
+
+Check the checkbox at the left of a task row in list view to immediately mark it as `completed`. The `completedAt` timestamp is recorded automatically. Completed tasks remain visible unless you filter them out with the status filter.
+
+<Tip>
+  Recurring tasks behave differently when completed — see the [Recurring tasks](#recurring-tasks) section below.
+</Tip>
+
+## Recurring tasks
+
+Enable **Make this a recurring task** in the task dialog to set up a repeating schedule. FluidCalendar uses the RFC 5545 RRule standard for recurrence, so patterns sync correctly with external providers like Outlook.
+
+Recurrence options:
+
+- **Repeat every** — enter an interval (e.g., `2`) and a unit: **days**, **weeks**, **months**, or **years**
+- A due date is required for recurring tasks. If you enable recurrence without a due date, today's date is set automatically.
+
+When you complete a recurring task, the `lastCompletedDate` is recorded. The task itself is not archived — it resets so the next occurrence can be tracked.
+
+<Note>
+  Recurrence rules imported from external sources (e.g., Outlook) are stored in the provider's native format and converted to RRule format for display.
+</Note>
+
+## Auto-scheduling
+
+The auto-schedule toggle on a task tells FluidCalendar's scheduler to find the best available slot on your calendar and block it out.
+
+When **Auto-Schedule** is enabled:
+
+- The scheduler considers the task's `duration`, `priority`, `energyLevel`, `preferredTime`, `dueDate`, and `startDate` when picking a time.
+- Once scheduled, the task's `scheduledStart` and `scheduledEnd` are set and shown in the task modal with a confidence score.
+- The scheduler may move the task on subsequent runs unless **Lock Schedule** is also enabled.
+
+### Lock Schedule
+
+Enable **Lock Schedule** (`scheduleLocked: true`) to pin a task to its current scheduled slot. The auto-scheduler will not move a locked task. A lock icon appears on the task card in board view and in the schedule column in list view to indicate the task is pinned.
+
+<Warning>
+  Lock Schedule is only available when Auto-Schedule is enabled. Disabling Auto-Schedule on a task clears the scheduled slot.
+</Warning>
+
+## Postponing a task
+
+Tasks can be snoozed to a future date by setting `postponedUntil`. Until that date is reached, the task is hidden from the default task view. This is useful for tasks you've acknowledged but can't act on yet.

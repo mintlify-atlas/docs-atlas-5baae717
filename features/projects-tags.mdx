@@ -1,0 +1,112 @@
+---
+title: "Projects and tags"
+description: "Organize tasks into projects and tag them for flexible filtering. Projects also act as the bridge when syncing with external task providers."
+---
+
+Projects and tags give you two complementary ways to organize tasks:
+
+- **Projects** are containers — a task belongs to exactly one project (or none). They appear in the sidebar and let you filter your task list to a single area of work.
+- **Tags** are labels — a task can have multiple tags. Tags are useful for cross-cutting concerns like `urgent`, `waiting`, or `research`.
+
+## Projects
+
+### Creating a project
+
+<Steps>
+  <Step title="Open the project sidebar">
+    The **Projects** panel appears on the left side of the Tasks page. Click the **+** button in the panel header.
+  </Step>
+  <Step title="Enter project details">
+    Fill in the **Name** (required) and an optional **Description**.
+  </Step>
+  <Step title="Choose a color">
+    Click the color swatch to open a color picker. The chosen color is displayed as a small dot next to the project name in the sidebar and on task cards in board view.
+  </Step>
+  <Step title="Save">
+    Click **Save Project**. The project is created with status `active` and appears in the sidebar immediately.
+  </Step>
+</Steps>
+
+### Editing a project
+
+Hover over a project name in the sidebar and click the pencil icon to open the edit dialog. You can update the name, description, and color.
+
+### Archiving and deleting a project
+
+From the edit dialog you can either **archive** or **delete** a project:
+
+- **Archive** — sets the project's status to `archived`. Archived projects are hidden from the main project list and moved to an **Archived** section at the bottom of the sidebar. Tasks in archived projects remain intact.
+- **Delete** — permanently removes the project. A confirmation dialog shows the number of tasks that will be affected. Tasks can be reassigned or also deleted.
+
+<Warning>
+  Deleting a project also removes any task list mappings tied to it. Tasks synced from an external provider through that mapping will be disconnected from the external source.
+</Warning>
+
+### Filtering tasks by project
+
+Click a project name in the sidebar to filter the task list to only that project's tasks. Click **All Tasks** at the top of the sidebar to return to the unfiltered view.
+
+You can also click **No Project** to see tasks that haven't been assigned to any project.
+
+### Assigning a task to a project
+
+When creating or editing a task, select a project from the **Project** dropdown. Only `active` projects appear in the list. To remove a task from a project, select **No Project**.
+
+You can also drag a task card from the board view and drop it onto a project in the sidebar to reassign it. Drop a task onto the **Drop here to remove from project** zone at the bottom of the sidebar to unassign it.
+
+### Projects and external sync
+
+Projects are the anchor point for external task synchronization. When you connect a task provider (such as Outlook Tasks), you map each external task list to a FluidCalendar project. All tasks imported from that list are assigned to the mapped project, and changes to those tasks can be pushed back to the external list.
+
+Each project can have one mapping per provider type (one-to-one). The sync icon appears next to a project's name in the sidebar whenever the project has an active mapping. Click the icon to trigger a manual sync for that project.
+
+See [Task sync](/features/task-sync) for full setup details.
+
+| External provider | Their concept | Maps to |
+|-------------------|---------------|---------|
+| Outlook Tasks | Task List | Project |
+| Google Tasks | Task List | Project |
+| CalDAV | Task Collection | Project |
+| Asana (planned) | Project/Board | Project |
+| Todoist (planned) | Project | Project |
+
+## Tags
+
+### Creating a tag
+
+Tags can be created directly from the task editor:
+
+<Steps>
+  <Step title="Open the task dialog">
+    Create a new task or open an existing one for editing.
+  </Step>
+  <Step title="Type a tag name">
+    In the **Tags** section, type a name in the **New tag name** input.
+  </Step>
+  <Step title="Pick a color">
+    Click the color swatch next to the name input to choose a color for the tag.
+  </Step>
+  <Step title="Add the tag">
+    Click **Add Tag**. The tag is created and immediately applied to the current task. It will also be available for all future tasks.
+  </Step>
+</Steps>
+
+<Note>
+  Tag names are unique per user. Creating a tag with the same name as an existing tag will reuse the existing tag.
+</Note>
+
+### Applying tags to a task
+
+In the task editor's **Tags** section, all existing tags are shown as clickable pills. Click a pill to toggle it on or off for the current task. A task can have any number of tags.
+
+### Filtering tasks by tag
+
+In the task list filter bar, the **Tags** filter lets you narrow the list to tasks that have at least one of the selected tags. This filter works across both list view and board view.
+
+### Tag colors
+
+Each tag has an optional color (stored as a hex value). The color is displayed:
+
+- As a dot inside the tag pill in the task editor
+- As the tag label background on task cards in board view
+- As a color hint in the filter bar

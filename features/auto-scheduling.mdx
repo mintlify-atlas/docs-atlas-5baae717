@@ -1,0 +1,159 @@
+---
+title: "Auto-scheduling"
+description: "Let FluidCalendar find the best time slots for your tasks, automatically fitting them around your calendar events and energy levels."
+---
+
+Auto-scheduling analyzes your tasks, your calendar, and your personal energy patterns to place tasks in the optimal time slots within your working hours. Instead of manually deciding when to work on each task, you mark tasks for auto-scheduling and FluidCalendar does the placement for you.
+
+## How it works
+
+When you trigger auto-scheduling, FluidCalendar runs through the following pipeline for every eligible task:
+
+1. **Generate candidate slots** — Starting from now (with a 15-minute minimum buffer), the scheduler produces 30-minute-interval slots spanning the next 7 days, clipped to your configured work hours and work days.
+2. **Filter by work hours** — Slots outside your `workHourStart`/`workHourEnd` range or on non-work days are discarded using `isWorkingHour(date, settings)`.
+3. **Remove calendar conflicts** — Each remaining slot is checked against the calendars listed in `selectedCalendars`. Any slot that overlaps an existing calendar event is removed.
+4. **Apply buffer time** — Each slot is evaluated for `bufferMinutes` of free time before and after it. Slots that have clear buffer windows on both sides are flagged `hasBufferTime = true`, which boosts their score.
+5. **Score slots** — Every surviving slot is scored against the task using a weighted model (see [Scoring](#slot-scoring) below).
+6. **Sort and assign** — Slots are sorted highest-score-first. The scheduler assigns the top slot to the task, then immediately registers that slot as a conflict so subsequent tasks cannot overlap it.
+
+Locked tasks (`scheduleLocked = true`) are fetched but their existing schedule is preserved — they are never moved.
+
+<Note>
+The scheduler searches a 7-day window. If no slot is found within that window, the task is left unscheduled and will be picked up on the next scheduling run.
+</Note>
+
+## Slot scoring
+
+Each slot receives a weighted score across seven factors:
+
+| Factor | Weight | Description |
+|---|---|---|
+| `deadlineProximity` | 3.0 | Urgency relative to the task's due date. Overdue tasks score above 1.0 (up to 2.0) and later slots are penalised. |
+| `priorityScore` | 1.8 | High priority → 1.0, Medium → 0.75, Low → 0.5, None → 0.25 |
+| `energyLevelMatch` | 1.5 | How well the slot's energy period matches the task's `energyLevel` (exact match → 1.0, adjacent → 0.5, opposite → 0.0) |
+| `timePreference` | 1.2 | Whether the slot falls in the task's `preferredTime` window. Tasks with no preference favour earlier slots via exponential decay. |
+| `workHourAlignment` | 1.0 | Binary: 1 if within work hours, 0 otherwise |
+| `bufferAdequacy` | 0.8 | Binary: 1 if buffer time is available on both sides |
+| `projectProximity` | 0.5 | When `groupByProject` is enabled, rewards slots close to other tasks from the same project |
+
+The final score is a weighted average. Tasks with higher initial scores are scheduled first, so high-priority or near-deadline tasks claim the best slots before lower-priority ones.
+
+## Task properties that affect scheduling
+
+The following fields on a task influence how and when it is scheduled:
+
+| Field | Type | Effect |
+|---|---|---|
+| `isAutoScheduled` | Boolean | Must be `true` for the task to be included in scheduling runs |
+| `scheduleLocked` | Boolean | When `true`, the task's current `scheduledStart`/`scheduledEnd` is preserved and never overwritten |
+| `duration` | Integer (minutes) | How long the task slot needs to be. Defaults to 30 minutes if not set |
+| `priority` | `high` / `medium` / `low` / `none` | Directly influences `priorityScore` |
+| `energyLevel` | `high` / `medium` / `low` | Matched against the energy level of the slot's hour via `getEnergyLevelForTime()` |
+| `preferredTime` | `morning` / `afternoon` / `evening` | Constrains preferred slot hours (morning: 5–12, afternoon: 12–17, evening: 17–22) |
+| `dueDate` | DateTime | Drives `deadlineProximity` scoring; overdue tasks are prioritised heavily |
+| `startDate` | DateTime | Tasks are not scheduled before this date |
+| `postponedUntil` | DateTime | Tasks are not scheduled until after this timestamp |
+
+### Enabling auto-scheduling on a task
+
+Open a task and toggle **Auto-schedule** on. FluidCalendar will include it in the next scheduling run.
+
+### Locking a scheduled task
+
+After a task is placed, you can lock its time slot to prevent it being moved by future scheduling runs. Toggle **Lock schedule** on the task. The `scheduleLocked` flag is set to `true` and the existing `scheduledStart`/`scheduledEnd` values are kept permanently until you unlock it.
+
+### Postponing a task
+
+You can push a task out of the current queue without deleting it. Set a **Postpone until** date/time; the task will be ignored by the scheduler and the Focus mode queue until that timestamp passes.
+
+## Configuring auto-schedule settings
+
+Go to **Settings → Auto-Schedule** to configure the behaviour of the scheduler.
+
+### Work hours
+
+Define the window the scheduler is allowed to place tasks in.
+
+| Setting | Field | Default |
+|---|---|---|
+| Work days | `workDays` | Monday – Friday (`[1,2,3,4,5]`) |
+| Work start | `workHourStart` | `9` (9:00 AM) |
+| Work end | `workHourEnd` | `17` (5:00 PM) |
+
+Days are stored as a JSON array of integers where Sunday = 0 and Saturday = 6. The `isWorkingHour(date, settings)` function checks both the day integer and the hour range on every candidate slot.
+
+### Calendars to check for conflicts
+
+The `selectedCalendars` field holds a JSON array of calendar feed IDs. The scheduler queries only these calendars when looking for conflicts. If the list is empty, calendar conflict checking is skipped entirely.
+
+<Tip>
+Add every calendar that contains real commitments — work calendar, personal calendar, shared family calendar — so the scheduler never places a task during a busy period.
+</Tip>
+
+### Buffer time
+
+The `bufferMinutes` setting (0–60, default 15) controls the gap the scheduler tries to preserve before and after each scheduled task. Slots that have clear buffer windows on both sides receive a higher `bufferAdequacy` score.
+
+### Energy level mappings
+
+Map time-of-day ranges to energy levels so that tasks land when you have the right mental energy for them.
+
+| Setting | Fields | Purpose |
+|---|---|---|
+| High energy hours | `highEnergyStart` / `highEnergyEnd` | Hours reserved for demanding, focused work |
+| Medium energy hours | `mediumEnergyStart` / `mediumEnergyEnd` | Hours for moderately demanding tasks |
+| Low energy hours | `lowEnergyStart` / `lowEnergyEnd` | Hours for routine or administrative tasks |
+
+All values are integers in the 0–23 range representing hours. Setting a start/end pair to **Not Set** (`null`) disables that energy band.
+
+At runtime, `getEnergyLevelForTime(hour, settings)` returns `"high"`, `"medium"`, `"low"`, or `null` for any given hour:
+
+```typescript
+export function getEnergyLevelForTime(
+  hour: number,
+  settings: AutoScheduleSettings
+): "high" | "medium" | "low" | null
+```
+
+The energy bands are checked in order: high → medium → low. The first matching range wins. If hour ranges overlap, the higher-energy range takes precedence.
+
+**Example (default settings)**
+
+| Band | Start | End | Hours |
+|---|---|---|---|
+| High | 9 | 12 | 9:00 AM – 11:59 AM |
+| Medium | 13 | 15 | 1:00 PM – 2:59 PM |
+| Low | 15 | 20 | 3:00 PM – 7:59 PM |
+
+A task with `energyLevel = "high"` will score 1.0 in the 9–12 window, 0.5 in the 13–15 window (adjacent), and 0.0 in the 15–20 window (opposite).
+
+<Note>
+Energy ranges are independent of work hours. A slot must satisfy both `isWorkingHour()` (to survive filtering) and `getEnergyLevelForTime()` (to score well on energy match).
+</Note>
+
+### Project grouping
+
+When **Project Grouping** (`groupByProject`) is enabled, the `projectProximity` scoring factor rewards slots that are close in time to other tasks from the same project. Tasks within the same project will tend to cluster together during the day, reducing context-switching.
+
+The proximity score uses exponential decay: tasks within 1 hour of each other score near 1.0, tasks 4+ hours apart score near 0.
+
+## Running the scheduler
+
+<Steps>
+  <Step title="Mark tasks for auto-scheduling">
+    Open each task you want scheduled and enable the **Auto-schedule** toggle. Only tasks with `isAutoScheduled = true` and `scheduleLocked = false` are processed.
+  </Step>
+  <Step title="Configure settings">
+    In **Settings → Auto-Schedule**, set your work hours, work days, calendar selections, buffer time, and energy level mappings.
+  </Step>
+  <Step title="Trigger scheduling">
+    Click the **Auto-schedule** button in the task list or calendar view. This calls `POST /api/tasks/schedule-all`, which runs `scheduleAllTasksForUser()` for your account.
+  </Step>
+  <Step title="Review placements">
+    Scheduled tasks appear on your calendar with `scheduledStart` and `scheduledEnd` times. Lock any placements you want to keep permanently.
+  </Step>
+</Steps>
+
+<Warning>
+Running the scheduler clears and rewrites `scheduledStart`, `scheduledEnd`, and `scheduleScore` for all non-locked auto-scheduled tasks. Locked tasks are unaffected.
+</Warning>

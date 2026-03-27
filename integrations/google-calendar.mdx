@@ -1,0 +1,174 @@
+---
+title: "Google Calendar"
+description: "Connect your Google Calendar to FluidCalendar for two-way event sync and intelligent task scheduling."
+---
+
+FluidCalendar integrates with Google Calendar using OAuth 2.0. Once connected, your Google Calendar events appear alongside your tasks so FluidCalendar can schedule around them. Changes you make in FluidCalendar sync back to Google Calendar automatically.
+
+## Prerequisites
+
+- A [Google account](https://accounts.google.com)
+- Access to [Google Cloud Console](https://console.cloud.google.com)
+- Your FluidCalendar instance running and accessible at a known URL
+
+## Set up a Google Cloud project
+
+<Steps>
+  <Step title="Create a project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com).
+    2. Click the project selector at the top of the page, then click **New Project**.
+    3. Enter a name (for example, `FluidCalendar`) and click **Create**.
+    4. Make sure the new project is selected before continuing.
+  </Step>
+
+  <Step title="Enable required APIs">
+    1. In the left sidebar, go to **APIs & Services → Library**.
+    2. Search for **Google Calendar API** and click **Enable**.
+    3. Search for **Google People API** and click **Enable**.
+
+    <Note>
+      The People API is required to retrieve the connected user's email address and profile information.
+    </Note>
+  </Step>
+
+  <Step title="Configure the OAuth consent screen">
+    1. Go to **APIs & Services → OAuth consent screen**.
+    2. Select **External** as the user type, then click **Create**.
+    3. Fill in the required fields:
+       - **App name**: `FluidCalendar` (or your preferred name)
+       - **User support email**: your email address
+       - **Developer contact information**: your email address
+    4. Click **Save and continue** to reach the **Scopes** section.
+    5. Click **Add or remove scopes** and add the following scopes:
+
+       | Scope | Purpose |
+       |---|---|
+       | `https://www.googleapis.com/auth/calendar.events` | Read and write calendar events |
+       | `https://www.googleapis.com/auth/calendar` | Full calendar access |
+       | `https://www.googleapis.com/auth/userinfo.email` | Read the user's email address |
+       | `openid` | OpenID Connect authentication |
+       | `https://www.googleapis.com/auth/tasks` | Sync Google Tasks (optional) |
+
+    6. Click **Update**, then **Save and continue**.
+    7. On the **Test users** page, add your Google account as a test user if you plan to use the app in testing mode.
+    8. Click **Save and continue**.
+
+    <Info>
+      While your app is in **Testing** mode, only users you explicitly add as test users can authorize the integration. You can publish the app later to remove this restriction.
+    </Info>
+  </Step>
+
+  <Step title="Create OAuth credentials">
+    1. Go to **APIs & Services → Credentials**.
+    2. Click **Create credentials → OAuth client ID**.
+    3. Under **Application type**, select **Web application**.
+    4. Enter a name (for example, `FluidCalendar Web Client`).
+    5. Under **Authorized JavaScript origins**, add:
+       - `http://localhost:3000` (for local development)
+       - Your production URL, if deployed (for example, `https://calendar.example.com`)
+    6. Under **Authorized redirect URIs**, add:
+       - `http://localhost:3000/api/auth/callback/google` (for local development)
+       - `https://your-domain.com/api/auth/callback/google` (for production)
+    7. Click **Create**.
+    8. Copy the **Client ID** and **Client Secret** from the dialog that appears.
+
+    <Warning>
+      Store your Client Secret securely. It is only shown once in this dialog. If you lose it, you must create new credentials.
+    </Warning>
+  </Step>
+
+  <Step title="Enter credentials in FluidCalendar">
+    1. Open FluidCalendar and go to **Settings → System**.
+    2. Scroll to the **Google Calendar Integration** section.
+    3. Paste your **Client ID** and **Client Secret**.
+    4. Click **Save**.
+
+    Alternatively, set these environment variables before starting FluidCalendar:
+
+    ```bash .env
+    GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+    GOOGLE_CLIENT_SECRET="your-client-secret"
+    ```
+
+    <Tip>
+      Settings configured in the UI take priority over environment variables. Environment variables are used as a fallback when no UI settings are saved.
+    </Tip>
+  </Step>
+
+  <Step title="Connect your Google account">
+    1. Go to **Settings → Integrations**.
+    2. Click **Connect Google Calendar**.
+    3. Sign in with your Google account and grant the requested permissions.
+    4. After authorization, your Google calendars will appear in the calendar sidebar.
+  </Step>
+</Steps>
+
+## How sync works
+
+FluidCalendar syncs events in both directions:
+
+- **Google → FluidCalendar**: Events from your connected Google calendars are fetched and displayed in FluidCalendar. Recurring events are expanded so each instance appears individually.
+- **FluidCalendar → Google**: When you create, update, or delete an event in FluidCalendar, the change is pushed to the corresponding Google Calendar immediately.
+
+For recurring events, you can choose to update or delete a **single instance** or the **entire series**. FluidCalendar handles both cases and patches the correct event on Google Calendar.
+
+### Auto-sync
+
+You can configure FluidCalendar to automatically pull the latest events from Google Calendar at a regular interval.
+
+1. Go to **Settings → Integrations**.
+2. Enable **Auto-sync** for Google Calendar.
+3. Set the **Sync interval** in minutes (between 1 and 60).
+
+## Managing your calendars
+
+Once connected, each Google Calendar is listed in the calendar sidebar as a separate feed. You can:
+
+- **Show or hide** a calendar by toggling its checkbox.
+- **Manually sync** a calendar by clicking the sync icon next to it.
+- **Remove** a calendar by clicking the trash icon.
+
+## Production deployment notes
+
+<Warning>
+  The following steps are required before sharing your FluidCalendar instance with other users or deploying to production.
+</Warning>
+
+**Verify your domain.** Google requires domain verification before you can add production redirect URIs. Follow the instructions in Google Search Console to verify your domain.
+
+**Add your production domain.** After verification, go to your OAuth credentials and add your production URL to both **Authorized JavaScript origins** and **Authorized redirect URIs**.
+
+**Request verification (for more than 100 users).** If your app will have more than 100 users, you must submit it for Google's OAuth verification process. This involves providing a privacy policy URL and a demonstration of how your app uses the requested scopes. Until verified, new users will see a warning screen when authorizing.
+
+**Publishing your app.** Change the app's publishing status from **Testing** to **In production** once you have completed verification. This removes the test-user restriction.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Authorization error: redirect_uri_mismatch">
+    The redirect URI sent by FluidCalendar does not match any URI registered in your Google Cloud credentials. Double-check that the **Authorized redirect URI** in Google Cloud Console exactly matches `{YOUR_URL}/api/auth/callback/google`, with no trailing slash.
+  </Accordion>
+
+  <Accordion title="403 access_denied during authorization">
+    Your Google account is not listed as a test user while the app is in **Testing** mode. Go to **OAuth consent screen → Test users** and add your account.
+  </Accordion>
+
+  <Accordion title="Events are not syncing">
+    Ensure that the Google Calendar API is enabled in your Google Cloud project under **APIs & Services → Library**. Also confirm the connected account has access to the calendars you expect to see.
+  </Accordion>
+
+  <Accordion title="Token refresh errors">
+    If you see token errors after a period of inactivity, reconnect your Google account from **Settings → Integrations**. FluidCalendar automatically refreshes tokens before they expire, but a token may become invalid if the OAuth credentials are rotated or permissions are revoked.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Outlook Calendar" icon="microsoft" href="/integrations/outlook-calendar">
+    Connect your Microsoft Outlook or Office 365 calendar
+  </Card>
+  <Card title="CalDAV" icon="calendar" href="/integrations/caldav">
+    Connect Nextcloud, iCloud, Fastmail, or any CalDAV server
+  </Card>
+</CardGroup>

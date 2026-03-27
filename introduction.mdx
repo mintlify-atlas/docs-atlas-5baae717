@@ -1,0 +1,79 @@
+---
+title: "Introduction"
+description: "FluidCalendar is an open-source, self-hostable intelligent task scheduling and calendar management app — an alternative to Motion."
+---
+
+## What is FluidCalendar?
+
+FluidCalendar combines smart automatic task scheduling with a full-featured calendar, helping you stay on top of your tasks without manual planning. It finds optimal time slots for your tasks based on your work hours, energy levels, and existing calendar events — so you spend less time managing your schedule and more time executing.
+
+<Note>
+FluidCalendar is in active development. You may encounter bugs. Please [report issues](https://github.com/dotnetfactory/fluid-calendar/issues) to help improve the project.
+</Note>
+
+## Key capabilities
+
+<CardGroup cols={2}>
+  <Card title="Intelligent scheduling" icon="brain">
+    Automatically schedule tasks into available time slots based on your work hours, energy levels, priorities, and buffer preferences.
+  </Card>
+  <Card title="Calendar integration" icon="calendar">
+    Two-way sync with Google Calendar, Microsoft Outlook, and CalDAV servers. See all your events in one place.
+  </Card>
+  <Card title="Task management" icon="list-check">
+    Manage tasks with projects, tags, priorities, energy levels, estimated durations, and recurrence rules.
+  </Card>
+  <Card title="Focus mode" icon="bullseye">
+    Work through your tasks one at a time in a distraction-free focus view with a built-in timer.
+  </Card>
+  <Card title="Task sync" icon="arrows-rotate">
+    Sync tasks bidirectionally with Outlook Tasks and other providers. Changes flow in both directions.
+  </Card>
+  <Card title="Self-hosted & private" icon="server">
+    Run your own instance with Docker and PostgreSQL. Your data stays on your infrastructure.
+  </Card>
+</CardGroup>
+
+## Open source vs SaaS
+
+FluidCalendar is available as both a self-hosted open source application and a managed SaaS service.
+
+| Feature | Open Source | SaaS |
+|---|---|---|
+| Calendar management | ✓ | ✓ |
+| Task management | ✓ | ✓ |
+| Google Calendar sync | ✓ | ✓ |
+| Outlook Calendar sync | ✓ | ✓ |
+| CalDAV integration | ✓ | ✓ |
+| Billing & subscriptions | — | ✓ |
+| Managed infrastructure | — | ✓ |
+| Automatic updates | — | ✓ |
+
+## Tech stack
+
+FluidCalendar is built with:
+
+- **Next.js 15** with App Router
+- **TypeScript** throughout
+- **Prisma** ORM with PostgreSQL
+- **FullCalendar** for the calendar UI
+- **NextAuth.js** for authentication
+- **Tailwind CSS** for styling
+- **BullMQ + Redis** for background jobs (SaaS)
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get FluidCalendar running in minutes with Docker
+  </Card>
+  <Card title="Docker deployment" icon="docker" href="/deployment/docker">
+    Full deployment guide for production setups
+  </Card>
+  <Card title="Google Calendar" icon="google" href="/integrations/google-calendar">
+    Connect your Google Calendar account
+  </Card>
+  <Card title="Auto-scheduling" icon="wand-magic-sparkles" href="/features/auto-scheduling">
+    Learn how intelligent scheduling works
+  </Card>
+</CardGroup>

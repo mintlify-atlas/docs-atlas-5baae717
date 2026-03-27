@@ -1,0 +1,149 @@
+---
+title: "User settings"
+description: "Configure your personal preferences, calendar defaults, notifications, and data management options in FluidCalendar."
+---
+
+User settings let you customize how FluidCalendar looks and behaves for your account. All changes apply only to your user and do not affect other users on the same instance.
+
+To open settings, click your profile icon or navigate to **Settings** in the sidebar.
+
+## General preferences
+
+These settings control the overall look and feel of the application.
+
+| Setting | Field | Options | Default |
+|---|---|---|---|
+| Theme | `theme` | `light`, `dark`, `system` | `system` |
+| Default calendar view | `defaultView` | `day`, `week`, `month`, `agenda` | `week` |
+| Time zone | `timeZone` | Any IANA timezone | System timezone |
+| Week starts on | `weekStartDay` | `sunday`, `monday` | `sunday` |
+| Time format | `timeFormat` | `12h`, `24h` | `12h` |
+
+**Theme** controls whether the interface uses light mode, dark mode, or follows your operating system preference.
+
+**Default calendar view** sets which view opens when you navigate to the calendar. You can always switch views from the calendar toolbar.
+
+**Time zone** affects how event times are displayed. Set this to your local timezone to ensure events appear at the correct local time.
+
+## Calendar settings
+
+These settings control calendar display and event creation defaults.
+
+| Setting | Field | Options | Default |
+|---|---|---|---|
+| Default calendar | `defaultCalendarId` | Any connected calendar | None |
+| Show working hours | `workingHoursEnabled` | On / Off | On |
+| Working hours start | `workingHoursStart` | Time (HH:mm) | `09:00` |
+| Working hours end | `workingHoursEnd` | Time (HH:mm) | `17:00` |
+| Working days | `workingHoursDays` | Days 0–6 (Sun–Sat) | Mon–Fri |
+| Default event duration | `defaultDuration` | Minutes | `60` |
+| Default event color | `defaultColor` | Hex color | `#3b82f6` |
+| Default reminder | `defaultReminder` | Minutes before event | `30` |
+
+**Default calendar** determines which calendar receives newly created events when you do not explicitly choose one. Only enabled calendars appear in this list.
+
+**Working hours** highlight your productive hours in the calendar view and are used by the auto-scheduler to determine when tasks can be placed. Enable **Show working hours** and configure start time, end time, and which days are working days.
+
+<Tip>
+  Working hours set here also inform the auto-scheduling engine. For more control over auto-scheduling, see [Auto-scheduling settings](/features/auto-scheduling).
+</Tip>
+
+## Notification settings
+
+Control how and when FluidCalendar sends you email notifications.
+
+| Setting | Field | Default |
+|---|---|---|
+| Email notifications | `emailNotifications` | On |
+| Daily email summary | `dailyEmailEnabled` | On |
+| Event invites | `eventInvites` | On |
+| Event updates | `eventUpdates` | On |
+| Event cancellations | `eventCancellations` | On |
+| Event reminders | `eventReminders` | On |
+| Default reminder timing | `defaultReminderTiming` | 30 minutes before |
+
+**Daily email summary** sends you a digest each day with your upcoming meetings and tasks.
+
+<Note>
+  Email notifications require a Resend API key to be configured in [System settings](/features/system-settings). If no email service is configured, notification settings have no effect.
+</Note>
+
+## Data settings
+
+Manage how FluidCalendar stores and retains your calendar data.
+
+| Setting | Field | Range | Default |
+|---|---|---|---|
+| Automatic backup | `autoBackup` | On / Off | On |
+| Backup interval | `backupInterval` | 1–30 days | 7 days |
+| Retain data for | `retainDataFor` | 30–3650 days | 365 days |
+
+**Automatic backup** enables periodic backups of your calendar data. When enabled, the **Backup interval** field controls how frequently backups run.
+
+**Retain data for** sets how long historical event data is kept before it is automatically archived. Events older than this threshold will no longer appear in your calendar.
+
+<Warning>
+  Lowering the data retention period will archive older events. This cannot be undone. Set a value that covers all the historical data you want to keep.
+</Warning>
+
+## Connected accounts
+
+The **Connected accounts** section shows all calendar provider accounts you have linked to your FluidCalendar profile. You can connect accounts for Google Calendar, Microsoft Outlook, and CalDAV servers.
+
+### Connecting an account
+
+<Steps>
+  <Step title="Open Settings">
+    Navigate to **Settings → Accounts**.
+  </Step>
+  <Step title="Choose a provider">
+    Click **Connect Google Calendar**, **Connect Outlook Calendar**, or **Connect CalDAV Calendar**.
+
+    <Note>
+      Google and Outlook buttons are only enabled if your administrator has configured OAuth credentials in [System settings](/features/system-settings). If the buttons are disabled, contact your administrator.
+    </Note>
+  </Step>
+  <Step title="Authorize access">
+    You will be redirected to the provider's authorization page. Grant the requested calendar permissions.
+  </Step>
+  <Step title="Confirm connection">
+    After authorization, you are redirected back to FluidCalendar. The account appears in the **Connected accounts** list with the number of calendars available.
+  </Step>
+</Steps>
+
+### Managing connected accounts
+
+Each connected account shows:
+
+- The provider (Google, Outlook, or CalDAV)
+- The account email address
+- The number of calendars available
+
+Click **Show Calendars** to expand the list of individual calendars for that account and enable or disable each one.
+
+Click **Remove** to disconnect an account. This removes the OAuth tokens and stops syncing calendars from that account.
+
+<Warning>
+  Removing a connected account stops calendar sync. Events already imported from that account are not deleted, but they will no longer be updated.
+</Warning>
+
+### CalDAV accounts
+
+For CalDAV accounts, you provide the server URL, username, and password directly in the connection form rather than going through an OAuth flow.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="System settings" icon="shield" href="/features/system-settings">
+    Configure OAuth credentials and system-wide options (admin only)
+  </Card>
+  <Card title="Import and export" icon="arrow-right-arrow-left" href="/features/import-export">
+    Back up or migrate your tasks and data
+  </Card>
+  <Card title="Auto-scheduling" icon="wand-magic-sparkles" href="/features/auto-scheduling">
+    Configure intelligent task scheduling
+  </Card>
+  <Card title="Calendar integrations" icon="calendar" href="/integrations/google-calendar">
+    Connect Google, Outlook, or CalDAV calendars
+  </Card>
+</CardGroup>

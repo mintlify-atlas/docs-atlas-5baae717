@@ -1,0 +1,139 @@
+---
+title: "Calendar views"
+description: "Switch between Day, Week, Month, and Year views, manage calendar feeds, and navigate with the mini calendar sidebar."
+---
+
+FluidCalendar gives you four ways to visualize your schedule. All views show both calendar events and auto-scheduled tasks side by side, each color-coded by calendar feed.
+
+## Switching views
+
+The view switcher sits in the top-right corner of the calendar header. Click **Day**, **Week**, **Month**, or **Year** to change the active view. Your selected view persists between sessions.
+
+You can also navigate the current period using the arrow buttons in the header:
+
+- **← (left arrow)** — moves back by one day, week, or month depending on the active view
+- **→ (right arrow)** — moves forward by one day, week, or month
+- **Today** — jumps immediately to the current date
+
+<Tip>
+Press `←` and `→` on your keyboard to move between periods, and press `t` to jump to today.
+</Tip>
+
+## The four views
+
+<Tabs>
+  <Tab title="Day">
+    The Day view shows a single day as a vertical time grid, with 30-minute slots from midnight to midnight. This is the most detailed view — each event block displays its title, time range, and location.
+
+    The view scrolls automatically to your working hours start time when you first open it. A red horizontal line marks the current time.
+
+    Click any time slot to open the event creation modal with that slot's time pre-filled. Click and drag across multiple slots to pre-fill a longer duration.
+
+    The day header shows the full weekday name, month, and day number (e.g., "Friday March 27").
+  </Tab>
+  <Tab title="Week">
+    The Week view shows seven days in a time-grid layout. Each column is one day; rows are 30-minute slots.
+
+    An all-day row at the top holds all-day events and multi-day events. Below it, timed events appear as blocks in their respective columns.
+
+    Click any slot to create an event at that time. Click and drag to select a time range before the modal opens.
+
+    Day column headers show the abbreviated weekday and the date (e.g., "Fri 3/27"). Click a column header to jump to that day in Day view.
+
+    The week start day (Sunday or Monday) follows your preference set in **Settings → User**.
+  </Tab>
+  <Tab title="Month">
+    The Month view shows the full calendar month as a grid of day cells. Events appear as colored pills inside each day cell.
+
+    When a day has more events than fit in the cell, a "+N more" overflow indicator appears. Click it to see the full list.
+
+    Click any day cell to jump to that day in Day view. Click a date number directly to open the event creation modal for that day.
+  </Tab>
+  <Tab title="Year">
+    The Year view (labeled **Year** in the toolbar) renders all 12 months in a grid of up to 3 columns. Each month shows a compact calendar grid with event dots on days that have events.
+
+    Use this view to get a high-level overview of your year, spot busy periods, and quickly jump to a specific month. Click any date to navigate to it.
+
+    <Note>
+    The Year view shows event indicators but does not display event titles. Switch to Month, Week, or Day view for details.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Current time indicator
+
+In the Day and Week views, a red line across the time grid marks the exact current time. It updates automatically as time passes, so you always know where you are in your day at a glance.
+
+Working hours (configured in **Settings → Calendar**) are visually distinguished — slots outside your working hours appear with a slightly different background, making it easy to see your productive window.
+
+## The sidebar
+
+The left sidebar contains the mini calendar and your list of calendar feeds. Toggle it open or closed by clicking the **≡ (menu)** icon in the top-left of the header, or pressing `b`.
+
+### Mini calendar
+
+The mini calendar at the top of the sidebar shows a compact monthly grid. It always starts weeks on Monday.
+
+- Click any date to jump to that date in the main view.
+- Use the **‹** and **›** arrow buttons to navigate the mini calendar month independently of the main view.
+- The currently selected date is highlighted with the primary color.
+- Today's date is highlighted with the accent color if it is not the selected date.
+
+The mini calendar is useful for quickly jumping to a date far in the future or past without changing the main view's period repeatedly.
+
+## Calendar feeds
+
+All calendars (feeds) you have connected appear in the **Your Calendars** list below the mini calendar. Each entry shows:
+
+- A checkbox to enable or disable the feed
+- A color dot representing the feed's color
+- The calendar name
+- A provider icon for Google Calendar or Outlook calendars
+- Sync and delete action buttons
+
+### Showing and hiding calendars
+
+Click the checkbox next to any calendar to toggle its visibility. When a feed is disabled, its events are hidden from all views immediately. The checkbox state is saved, so your visibility preferences persist between sessions.
+
+<Note>
+Auto-scheduled tasks always appear on the calendar regardless of feed visibility. They are shown with their own color and are not tied to any feed toggle.
+</Note>
+
+### Syncing a calendar feed
+
+Click the **↻ (sync)** button next to a feed to trigger an immediate sync with the external calendar provider. The icon spins while syncing is in progress. Once complete, any new or updated events from the provider appear in the calendar.
+
+### Removing a calendar feed
+
+Click the **trash** icon next to a feed to remove it. This deletes all events associated with that feed from your FluidCalendar instance.
+
+<Warning>
+Removing a feed deletes all its synced events from FluidCalendar. The events are not deleted from the external provider (Google, Outlook, etc.).
+</Warning>
+
+### Feed colors
+
+Each feed has a color that is applied to all its events on the calendar. You can change a feed's color in **Settings → Integrations** or from the calendar connection setup. Events from a feed inherit the feed color — they cannot be individually recolored.
+
+Auto-scheduled tasks use the color set on the task itself (defaulting to indigo `#4f46e5`).
+
+## Auto-scheduled tasks on the calendar
+
+When you run **Auto Schedule** (the button in the calendar header), FluidCalendar finds available time slots and assigns a scheduled start and end time to qualifying tasks. These tasks then appear on the calendar as event blocks alongside your regular events.
+
+Auto-scheduled task blocks are visually distinct from calendar events — they use the `calendar-task` CSS class and display with the task's own color. Clicking a task block opens the quick view popover showing the task's due date, priority, scheduled time, confidence score, and project.
+
+To re-run scheduling at any time, click **Auto Schedule** again. FluidCalendar will reschedule unscheduled tasks and respect any tasks with a locked schedule.
+
+<Tip>
+To prevent a task from being rescheduled, lock its schedule from the task detail view. Locked tasks appear with a lock icon in the quick view.
+</Tip>
+
+## Keyboard shortcuts
+
+| Key | Action |
+|-----|--------|
+| `b` | Toggle sidebar |
+| `t` | Jump to today |
+| `←` | Previous day / week / month |
+| `→` | Next day / week / month |

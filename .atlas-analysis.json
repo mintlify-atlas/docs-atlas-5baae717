@@ -1,0 +1,105 @@
+{
+  "projectType": "saas",
+  "projectName": "FluidCalendar",
+  "projectDescription": "An open-source, self-hostable intelligent task scheduling and calendar management app — an alternative to Motion — with Google, Outlook, and CalDAV integrations.",
+  "theme": "almond",
+  "primaryColor": "#94cb04",
+  "lightColor": "#545454",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Getting Started",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/environment-variables",
+              "deployment/database"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/google-calendar",
+              "integrations/outlook-calendar",
+              "integrations/caldav"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "groups": [
+          {
+            "group": "Calendar",
+            "pages": [
+              "features/calendar-views",
+              "features/events"
+            ]
+          },
+          {
+            "group": "Tasks",
+            "pages": [
+              "features/task-management",
+              "features/projects-tags",
+              "features/task-sync"
+            ]
+          },
+          {
+            "group": "Scheduling",
+            "pages": [
+              "features/auto-scheduling",
+              "features/focus-mode"
+            ]
+          },
+          {
+            "group": "Settings & Administration",
+            "pages": [
+              "features/user-settings",
+              "features/system-settings",
+              "features/import-export"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Intelligent auto-scheduling that finds optimal time slots for tasks based on work hours, energy levels, and calendar availability",
+    "Two-way calendar sync with Google Calendar, Microsoft Outlook, and CalDAV servers",
+    "Task management with projects, tags, priorities, energy levels, and recurrence rules",
+    "Focus mode for distraction-free task execution",
+    "Multiple calendar views (day, week, month, multi-month)",
+    "Docker-based self-hosting with PostgreSQL",
+    "Optional SaaS hosted version with Stripe billing and waitlist management",
+    "Import/export support for data portability"
+  ],
+  "publicApiSurface": [
+    "GET /api/tasks — List tasks",
+    "POST /api/tasks — Create task",
+    "PUT /api/tasks/:id — Update task",
+    "DELETE /api/tasks/:id — Delete task",
+    "GET /api/events — List calendar events",
+    "POST /api/events — Create calendar event",
+    "GET /api/calendar — List calendar feeds",
+    "POST /api/calendar/google — Connect Google Calendar",
+    "POST /api/auto-schedule-settings — Update auto-schedule settings",
+    "POST /api/task-sync — Trigger task sync",
+    "GET /api/projects — List projects",
+    "POST /api/projects — Create project",
+    "GET /api/tags — List tags",
+    "POST /api/import — Import calendar/task data",
+    "GET /api/export — Export data",
+    "GET /api/settings — Get system settings",
+    "POST /api/setup — Initial application setup"
+  ]
+}

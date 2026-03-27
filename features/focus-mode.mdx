@@ -1,0 +1,92 @@
+---
+title: "Focus mode"
+description: "Work through your tasks one at a time with a distraction-free interface that surfaces your most important work first."
+---
+
+Focus mode gives you a dedicated view for executing tasks. Instead of scanning a long list, you see one task at a time in the main panel, with your task queue and quick actions always within reach. When you finish or dismiss a task, the next one loads automatically.
+
+## The focus mode layout
+
+Focus mode is divided into three columns:
+
+<CardGroup cols={3}>
+  <Card title="Task queue" icon="list">
+    Left sidebar showing your Top Tasks, Past Due, Postponed, and Recently Completed sections.
+  </Card>
+  <Card title="Focused task" icon="eye">
+    Main panel with the current task's full details: title, tags, due date, estimated duration, focus score, and description.
+  </Card>
+  <Card title="Quick actions" icon="bolt">
+    Right sidebar with buttons to complete, edit, delete, or postpone the current task.
+  </Card>
+</CardGroup>
+
+## Starting a focus session
+
+<Steps>
+  <Step title="Open focus mode">
+    Navigate to **/focus** in the sidebar. The page loads with the first task from your queue already selected.
+  </Step>
+  <Step title="Review the current task">
+    The main panel shows the task title, any tags, due date, estimated duration, focus score, and full description. URLs in the description are automatically converted to clickable links.
+  </Step>
+  <Step title="Work on the task">
+    Do the work. When you are done, use **Complete Task** in the Quick Actions sidebar.
+  </Step>
+</Steps>
+
+## The task queue
+
+The left sidebar organises all your tasks into four sections. Each section shows up to three tasks by default; click **Show N more** to expand.
+
+| Section | Filter logic |
+|---|---|
+| **Top Tasks** | Not completed, not postponed, `startDate` is today or earlier. Sorted by `scheduledStart` ascending (earliest first). Limited to the top 3 by score. |
+| **Past Due** | Not completed, not postponed, `dueDate` is in the past. Sorted oldest due date first. |
+| **Postponed** | Not completed, `postponedUntil` is set and still in the future. Sorted by `postponedUntil` ascending. |
+| **Recently Completed** | `status = COMPLETED`, has `completedAt`. Sorted newest completion first. |
+
+Click any task in the sidebar to switch to it immediately.
+
+<Note>
+Your current task selection in focus mode is persisted in browser local storage (`focus-mode-storage`). Reopening the page resumes where you left off.
+</Note>
+
+## Completing a task
+
+Click **Complete Task** in the Quick Actions panel. FluidCalendar:
+
+1. Sets `status` to `COMPLETED` on the task record.
+2. Shows a brief celebration overlay.
+3. Refreshes the task list.
+4. Automatically advances to the next task in the Top Tasks queue.
+
+If there are no more tasks in the queue, the main panel shows "No task selected".
+
+## Postponing a task
+
+If you are not ready to work on the current task, postpone it without losing it. The Quick Actions panel offers four preset durations:
+
+| Button | Effect |
+|---|---|
+| **1 hour** | Sets `postponedUntil` to now + 1 hour |
+| **3 hours** | Sets `postponedUntil` to now + 3 hours |
+| **1 day** | Sets `postponedUntil` to now + 1 day |
+| **1 week** | Sets `postponedUntil` to now + 7 days |
+
+After postponing, the task moves to the **Postponed** section of the queue and the next available task is loaded. The task reappears in **Top Tasks** automatically once `postponedUntil` has passed.
+
+## Editing and deleting tasks
+
+Both actions are available from the Quick Actions panel while in focus mode.
+
+- **Edit Task** — Opens the full task edit modal. Save your changes and the focused task view refreshes.
+- **Delete Task** — Shows a confirmation prompt. Confirmed deletion removes the task permanently and advances to the next queued task.
+
+## Switching tasks manually
+
+You do not have to work in queue order. Click any task title in the left sidebar to immediately switch the main panel to that task. The highlighted row indicates the currently focused task.
+
+## Focus score
+
+If a task has been auto-scheduled, the main panel displays its **Focus Score** (`scheduleScore`). This is the slot score assigned during the last scheduling run — a higher number indicates the task was placed in a particularly well-matched time slot. The score is shown for informational purposes only and does not change while in focus mode.

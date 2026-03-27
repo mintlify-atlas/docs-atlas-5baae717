@@ -1,0 +1,202 @@
+---
+title: "Database"
+description: "PostgreSQL setup, connection strings, running migrations, and backup guidance for FluidCalendar."
+---
+
+FluidCalendar uses **PostgreSQL** as its only supported database. Schema management is handled by [Prisma](https://www.prisma.io/), and migrations are applied automatically when the Docker container starts.
+
+## Requirements
+
+- PostgreSQL 14 or later (the bundled Docker Compose uses `postgres:16-alpine`)
+- A dedicated database and user for FluidCalendar
+
+## Connection string
+
+Set the `DATABASE_URL` environment variable to a standard PostgreSQL connection string:
+
+```
+postgresql://<user>:<password>@<host>:<port>/<database>
+```
+
+**Example — Docker Compose (default):**
+```
+postgresql://fluid:fluid@db:5432/fluid_calendar
+```
+
+The hostname `db` resolves to the `db` service defined in `docker-compose.yml`. When connecting from outside Docker (e.g., from a local development machine), use `localhost` instead:
+
+```
+postgresql://fluid:fluid@localhost:5432/fluid_calendar
+```
+
+<Warning>
+  The default credentials (`fluid` / `fluid`) are acceptable for local development. For any internet-facing deployment, use a strong, unique password and consider restricting the PostgreSQL port from public access.
+</Warning>
+
+## Automatic migrations
+
+The Docker image runs `prisma migrate deploy` inside `entrypoint.sh` before starting the Next.js server. This means the schema is always up to date as long as you pull the latest image before restarting the stack.
+
+```sh
+# entrypoint.sh (runs automatically inside the container)
+npx prisma generate
+npx prisma migrate deploy
+exec "$@"  # starts the application
+```
+
+You do not need to run any migration commands manually when using Docker Compose.
+
+## Running migrations manually
+
+If you are running FluidCalendar outside Docker (e.g., a bare Node.js deployment), apply pending migrations with:
+
+```bash
+npx prisma migrate deploy
+```
+
+To generate the Prisma client after a schema change:
+
+```bash
+npx prisma generate
+```
+
+To open Prisma Studio, a browser-based GUI for browsing your data:
+
+```bash
+npm run prisma:studio
+# equivalent to: npx prisma studio
+```
+
+## The migrate.js script
+
+`migrate.js` is a one-time data migration utility for users who ran an early version of FluidCalendar that used **SQLite** (`./data/dev.db`) and need to move their data to PostgreSQL.
+
+<Note>
+  This script is only relevant if you have existing data from a SQLite-based installation. New installations using Docker Compose start with PostgreSQL directly and do not need this script.
+</Note>
+
+### What it does
+
+The script connects to both the local SQLite file and the target PostgreSQL database, then migrates each table in dependency order:
+
+1. Independent tables first: `Tag`, `User`, `SystemSettings`
+2. Tables that depend on `User`: `Account`, `Session`, `AutoScheduleSettings`, `ConnectedAccount`
+3. `Project`, then `Task` and `_TagToTask`
+4. `CalendarFeed`, then `CalendarEvent` (with feed existence checks)
+5. `OutlookTaskListMapping`, `VerificationToken`
+
+Timestamp fields are normalised from SQLite's numeric format to ISO-8601 strings. Rows that already exist in PostgreSQL are skipped (`ON CONFLICT DO NOTHING`).
+
+### Running the migration
+
+<Steps>
+  <Step title="Install dependencies">
+    The script requires `better-sqlite3` and `pg`:
+
+    ```bash
+    npm install better-sqlite3 pg
+    ```
+  </Step>
+
+  <Step title="Configure the target database">
+    Edit the connection details at the top of `migrate.js` to match your PostgreSQL instance:
+
+    ```js
+    const pool = new Pool({
+      user: "fluid",
+      host: "localhost",
+      database: "fluid_calendar",
+      password: "fluid",
+      port: 5432,
+    });
+    ```
+  </Step>
+
+  <Step title="Ensure the schema is applied">
+    The PostgreSQL database must already have the schema applied before running the migration:
+
+    ```bash
+    npx prisma migrate deploy
+    ```
+  </Step>
+
+  <Step title="Run the script">
+    ```bash
+    node migrate.js
+    ```
+
+    The script logs progress per table and reports success/failure counts. Any rows that cannot be inserted (e.g., constraint violations) are logged individually and skipped — the remaining rows continue to be processed.
+  </Step>
+</Steps>
+
+## Resetting the database
+
+<Warning>
+  The following command permanently deletes all data. There is no undo.
+</Warning>
+
+To wipe the database and start fresh when using Docker Compose:
+
+```bash
+# Stop the stack and remove the data volume
+docker compose down -v
+
+# Start again — migrations run automatically on first boot
+docker compose up -d
+```
+
+The `-v` flag removes the `postgres_dev_data` named volume. On the next start, PostgreSQL initialises a fresh database and the entrypoint applies all migrations from scratch.
+
+## Accessing the database directly
+
+Open a `psql` prompt inside the running database container:
+
+```bash
+docker compose exec db psql -U fluid -d fluid_calendar
+```
+
+Useful `psql` commands once connected:
+
+```sql
+-- List all tables
+\dt
+
+-- Count rows in a table
+SELECT count(*) FROM "User";
+
+-- Exit
+\q
+```
+
+## Backups
+
+All application data lives in the `postgres_dev_data` Docker volume. Back it up regularly using `pg_dump`:
+
+```bash
+# Dump to a compressed file
+docker compose exec db pg_dump -U fluid fluid_calendar | gzip > fluid_calendar_backup_$(date +%Y%m%d).sql.gz
+
+# Restore from a dump
+gunzip -c fluid_calendar_backup_20260101.sql.gz | docker compose exec -T db psql -U fluid -d fluid_calendar
+```
+
+<Tip>
+  Schedule a cron job or use a backup service to automate daily dumps, especially before pulling a new version of the image.
+</Tip>
+
+## Schema overview
+
+The Prisma schema at `prisma/schema.prisma` defines the full data model. Key tables include:
+
+| Table | Purpose |
+|---|---|
+| `User` | Authenticated users; `role` field supports `user` and `admin` values |
+| `Account` / `Session` | NextAuth.js OAuth account links and active sessions |
+| `CalendarFeed` | Connected calendars (Google, Outlook, CalDAV, local) |
+| `CalendarEvent` | Individual calendar events, including recurring event instances |
+| `Task` | Tasks with scheduling metadata (duration, priority, energy level, etc.) |
+| `Project` | Task groupings / projects |
+| `ConnectedAccount` | OAuth tokens for calendar provider accounts |
+| `SystemSettings` | Admin-level settings (OAuth credentials, log configuration, public signup toggle) |
+| `AutoScheduleSettings` | Per-user auto-scheduling preferences |
+| `JobRecord` | BullMQ job tracking for background tasks |

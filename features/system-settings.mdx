@@ -1,0 +1,189 @@
+---
+title: "System settings"
+description: "Admin-only settings for configuring OAuth credentials, logging, email service, public signup, and user management in FluidCalendar."
+---
+
+System settings contain instance-wide configuration that affects all users. Only users with the **admin** role can view or modify these settings.
+
+<Warning>
+  Accessing system settings without the admin role returns an access denied error. If you need admin access, ask your instance owner to update your role in the database.
+</Warning>
+
+To open system settings, navigate to **Settings → System** (visible only to admins).
+
+## Google Calendar integration
+
+Configure OAuth 2.0 credentials so users can connect their Google Calendar accounts.
+
+| Field | Description |
+|---|---|
+| `googleClientId` | OAuth 2.0 Client ID from Google Cloud Console |
+| `googleClientSecret` | OAuth 2.0 Client Secret from Google Cloud Console |
+
+<Note>
+  Values entered here override the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables. The UI fields take precedence when both are set.
+</Note>
+
+### Setting up Google OAuth credentials
+
+<Steps>
+  <Step title="Open Google Cloud Console">
+    Go to [console.cloud.google.com](https://console.cloud.google.com) and select or create a project.
+  </Step>
+  <Step title="Enable the Google Calendar API">
+    In the API Library, search for **Google Calendar API** and enable it.
+  </Step>
+  <Step title="Create OAuth credentials">
+    Go to **APIs & Services → Credentials**, then click **Create Credentials → OAuth 2.0 Client ID**.
+  </Step>
+  <Step title="Configure the redirect URI">
+    Under **Authorized redirect URIs**, add:
+
+    ```
+    https://your-domain.com/api/calendar/google
+    ```
+
+    Replace `your-domain.com` with the hostname of your FluidCalendar instance.
+  </Step>
+  <Step title="Copy credentials to FluidCalendar">
+    Copy the **Client ID** and **Client Secret** and paste them into the corresponding fields in system settings. Changes are saved immediately on blur.
+  </Step>
+</Steps>
+
+## Outlook Calendar integration
+
+Configure Azure AD OAuth credentials so users can connect their Microsoft Outlook calendar accounts.
+
+| Field | Description |
+|---|---|
+| `outlookClientId` | Application (client) ID from Azure Portal |
+| `outlookClientSecret` | Client secret created in Azure Portal |
+| `outlookTenantId` | Directory (tenant) ID, or leave blank to allow any Microsoft account |
+
+<Note>
+  Values entered here override the `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, and `AZURE_AD_TENANT_ID` environment variables.
+</Note>
+
+Leave **Tenant ID** empty (defaults to `common`) to allow users to sign in with any personal or organizational Microsoft account. Set it to a specific tenant ID to restrict access to a single Azure AD organization.
+
+### Setting up Outlook OAuth credentials
+
+<Steps>
+  <Step title="Register an application in Azure">
+    Go to the [Azure Portal App registrations](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) and create a new registration.
+  </Step>
+  <Step title="Add Microsoft Graph permissions">
+    Under **API permissions**, add the Microsoft Graph **Calendars.ReadWrite** delegated permission.
+  </Step>
+  <Step title="Configure authentication">
+    Under **Authentication**, add a platform and set the redirect URI:
+
+    ```
+    https://your-domain.com/api/calendar/outlook
+    ```
+  </Step>
+  <Step title="Create a client secret">
+    Under **Certificates & secrets**, create a new client secret and copy the value immediately (it will not be shown again).
+  </Step>
+  <Step title="Copy credentials to FluidCalendar">
+    Paste the Application ID and client secret into the corresponding fields in system settings.
+  </Step>
+</Steps>
+
+## Email service
+
+FluidCalendar uses [Resend](https://resend.com) to send email notifications including daily summaries and event alerts.
+
+| Field | Description |
+|---|---|
+| `resendApiKey` | API key from your Resend account |
+
+Without a Resend API key, email notifications are silently disabled regardless of individual user notification preferences.
+
+## Logging
+
+Control what application events are logged and how long logs are retained.
+
+| Field | Options | Default | Description |
+|---|---|---|---|
+| `logLevel` | `none`, `debug`, `info`, `warn`, `error` | `none` | Minimum severity level to record |
+| `logDestination` | `db`, `file`, `both` | `db` | Where log entries are written |
+| `logRetention` | JSON per-level durations | — | How long to retain logs at each level |
+
+Set **Log level** to `none` to disable logging entirely. Higher verbosity levels (`debug`, `info`) generate more data and may affect database performance at scale.
+
+**Log destination** controls where entries are persisted. Use `db` to store logs in the PostgreSQL `Log` table, `file` to write to disk, or `both` for dual output.
+
+**Log retention** accepts a JSON object that maps log levels to retention periods. Expired log entries are cleaned up automatically.
+
+### Viewing logs
+
+The log viewer is available under **Settings → Logs** (admin only). It displays application log entries stored in the database with timestamp, severity level, source component, and message. Use the log viewer to diagnose integration errors, authentication issues, and background job failures.
+
+## Homepage behavior
+
+| Field | Options | Default | Description |
+|---|---|---|---|
+| `disableHomepage` | `false`, `true` | `false` | Redirect the root URL instead of showing the homepage |
+
+When **Disable homepage** is enabled, visiting `/` redirects unauthenticated users to the login page and authenticated users directly to the calendar view.
+
+## Public signup
+
+Control whether new users can self-register without admin intervention.
+
+| Field | Default | Description |
+|---|---|---|
+| `publicSignup` | `false` (disabled) | Allow or disallow self-registration |
+
+When public signup is **disabled**, only users created directly by an admin (or via invitation) can access the instance. This is the recommended setting for private deployments.
+
+When public signup is **enabled**, anyone who can reach your instance's login page can create an account.
+
+<Warning>
+  Enable public signup only if your instance is intended for open access. For private or team deployments, leave this disabled and create user accounts manually.
+</Warning>
+
+### Changing the public signup setting
+
+<Steps>
+  <Step title="Open System settings">
+    Navigate to **Settings → System**.
+  </Step>
+  <Step title="Locate the User Management section">
+    Scroll to the **User Management** card.
+  </Step>
+  <Step title="Toggle the Public Signup switch">
+    Flip the **Public signup** toggle to the desired state.
+  </Step>
+  <Step title="Save changes">
+    Click **Save Changes**. The setting takes effect immediately.
+  </Step>
+</Steps>
+
+## User management
+
+The **User Management** section lets admins oversee user accounts on the instance.
+
+Currently, this section includes the public signup toggle. Full user account management (viewing, editing, and deactivating user accounts) is planned for a future release.
+
+<Note>
+  User roles are stored in the `User.role` field in the database. The possible values are `user` and `admin`. To grant admin access to an existing account, update the `role` column directly in the database.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="User settings" icon="user" href="/features/user-settings">
+    Per-user preferences for theme, timezone, and notifications
+  </Card>
+  <Card title="Environment variables" icon="gear" href="/deployment/environment-variables">
+    Full reference for configuration via environment variables
+  </Card>
+  <Card title="Google Calendar" icon="google" href="/integrations/google-calendar">
+    Guide for connecting Google Calendar accounts
+  </Card>
+  <Card title="Outlook Calendar" icon="microsoft" href="/integrations/outlook-calendar">
+    Guide for connecting Outlook Calendar accounts
+  </Card>
+</CardGroup>

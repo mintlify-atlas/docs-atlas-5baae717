@@ -1,0 +1,197 @@
+---
+title: "Events"
+description: "Create, view, edit, and delete calendar events. Manage recurring events and events synced from external calendars."
+---
+
+Calendar events in FluidCalendar live inside calendar feeds. You can create events directly on the calendar grid, edit them through a full modal, and quickly inspect them via a popover without leaving the current view.
+
+## Creating an event
+
+You can create an event from any view:
+
+<Steps>
+  <Step title="Click or drag on the calendar grid">
+    In the **Day** or **Week** view, click a time slot to open the event modal with that time pre-filled. Click and drag across multiple slots to pre-fill a start and end time.
+
+    In the **Month** or **Year** view, click a day cell to open the modal with that day's date pre-filled as an all-day event.
+  </Step>
+  <Step title="Fill in the event details">
+    The **New Event** modal opens. At minimum, provide a **Title** and confirm the **Start** and **End** times. All other fields are optional.
+  </Step>
+  <Step title="Choose a calendar">
+    Select the destination calendar from the **Calendar** dropdown. Only enabled feeds appear in the list. Google Calendar feeds are labeled "(Google)".
+  </Step>
+  <Step title="Save">
+    Click **Create** to save the event. It appears on the calendar immediately.
+  </Step>
+</Steps>
+
+<Note>
+The **Calendar** field defaults to the calendar configured as your default in **Settings → Calendar → Default calendar**.
+</Note>
+
+## The event modal
+
+The event modal is used for both creating and editing events. It contains the following fields:
+
+| Field | Description |
+|-------|-------------|
+| **Title** | Required. The event name displayed on the calendar grid. |
+| **Calendar** | The feed this event belongs to. Cannot be changed after the event is created. |
+| **Start** | Start date and time. Switches to a date-only picker when **All day** is checked. |
+| **End** | End date and time. Switches to a date-only picker when **All day** is checked. |
+| **All day** | When checked, the event spans the full day and appears in the all-day row in Day and Week views. |
+| **Location** | Optional free-text location, displayed in the event quick view. |
+| **Description** | Optional notes or details about the event. |
+| **Recurring event** | When checked, exposes recurrence options (see [Recurring events](#recurring-events)). |
+
+## Viewing event details
+
+### Quick view popover
+
+Clicking any event block on the calendar opens a compact popover anchored near the event. The quick view shows:
+
+- Event title and a recurring indicator icon if applicable
+- Start and end time (formatted according to your 12h/24h preference)
+- Location, if set
+- Attendees list with each person's RSVP status (accepted, tentative, declined, or pending)
+- Description snippet (truncated to two lines)
+
+From the quick view you can:
+
+- Click the **pencil** icon to open the full edit modal
+- Click the **trash** icon to delete the event
+
+Close the popover by clicking anywhere outside it or pressing `Escape`.
+
+### Full edit modal
+
+Open the full modal from the quick view by clicking the pencil icon, or by clicking **Edit** when available. The modal shows all event fields and lets you make changes.
+
+## Editing an event
+
+<Steps>
+  <Step title="Open the quick view">
+    Click the event on the calendar to open the quick view popover.
+  </Step>
+  <Step title="Click the pencil icon">
+    The event modal opens in edit mode, showing all existing field values.
+  </Step>
+  <Step title="Make your changes">
+    Update any field. The **Calendar** field is disabled for existing events — you cannot move an event to a different feed after creation.
+  </Step>
+  <Step title="Save">
+    Click **Update** to save. The calendar refreshes immediately.
+  </Step>
+</Steps>
+
+<Warning>
+For Google Calendar events, only events you own (those with an `externalEventId` set by FluidCalendar) can be edited. Events synced from a calendar you do not own are read-only.
+</Warning>
+
+## Deleting an event
+
+You can delete an event from two places:
+
+- **Quick view popover** — click the trash icon
+- **Edit modal** — click the red **Delete** button in the bottom-left corner
+
+Both paths ask for confirmation before deleting. The deletion is permanent and cannot be undone from within FluidCalendar.
+
+<Warning>
+Deleting an event that was synced from an external calendar (Google, Outlook) removes it from FluidCalendar's local copy. Depending on your sync setup, the deletion may or may not propagate back to the external provider.
+</Warning>
+
+## Recurring events
+
+FluidCalendar supports recurring events using the iCalendar RRULE standard.
+
+### Creating a recurring event
+
+<Steps>
+  <Step title="Check 'Recurring event'">
+    In the event modal, check the **Recurring event** checkbox. Recurrence options appear below.
+  </Step>
+  <Step title="Choose a frequency">
+    Select how often the event repeats from the **Repeats** dropdown:
+
+    - **Daily** — repeats every N days
+    - **Weekly** — repeats every N weeks, optionally on specific weekdays
+    - **Monthly** — repeats every N months
+    - **Yearly** — repeats every N years
+  </Step>
+  <Step title="Set the interval">
+    The **Repeat every** field controls the interval. For example, set frequency to **Weekly** and interval to `2` for a bi-weekly event.
+  </Step>
+  <Step title="Choose weekdays (weekly only)">
+    For weekly recurrence, check the specific days of the week the event should occur. FluidCalendar pre-selects the weekday of the event's start date.
+  </Step>
+  <Step title="Save">
+    Click **Create**. FluidCalendar generates the recurrence rule (e.g., `FREQ=WEEKLY;BYDAY=MO,WE,FR`) and stores it with the event.
+  </Step>
+</Steps>
+
+### Editing a recurring event
+
+When you open an existing recurring event for editing, FluidCalendar currently edits the **entire series** by default. All instances of the recurring event are updated when you save.
+
+<Note>
+Editing individual occurrences independently ("this event only" vs "all events") is planned for a future release. Currently, all edits apply to the entire series.
+</Note>
+
+### Recurring event indicator
+
+Recurring events display a repeat icon (↻) next to the title in both the quick view popover and the event grid block, making them easy to identify at a glance.
+
+## Events from external calendars
+
+Events synced from Google Calendar, Microsoft Outlook, and CalDAV servers appear alongside locally created events.
+
+### Read-only vs editable
+
+<AccordionGroup>
+  <Accordion title="Google Calendar events">
+    Events synced from Google Calendar are editable if FluidCalendar created them (they have an `externalEventId`). Events that originated in Google Calendar and were pulled in during a sync are read-only — attempting to edit them shows an error: "Cannot edit this Google Calendar event".
+  </Accordion>
+  <Accordion title="Outlook Calendar events">
+    Outlook events follow the same rules as Google Calendar events. Events with a matching `externalEventId` are editable; events that originated in Outlook are read-only in FluidCalendar.
+  </Accordion>
+  <Accordion title="CalDAV events">
+    CalDAV events synced from a connected CalDAV server are displayed on the calendar. Editability depends on the CalDAV server's permissions and the FluidCalendar sync implementation.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+To edit an event that originated in an external calendar, edit it directly in Google Calendar, Outlook, or your CalDAV client, then sync the feed in FluidCalendar to pull in the changes.
+</Tip>
+
+### Color coding
+
+External events inherit the color of their parent feed, not the color set in the external provider. Adjust the feed color in the sidebar or in **Settings → Integrations** to change how external events appear.
+
+## Event attendees and organizer
+
+When an event includes attendee or organizer information (typically for events synced from Google or Outlook), the quick view popover displays it:
+
+- **Attendees** — listed by name (or email if no name is available), each with their RSVP status:
+  - Accepted — shown in green
+  - Tentative — shown in amber
+  - Declined — shown in red
+  - No response (pending) — shown in muted text
+
+Attendee and organizer data is stored as JSON in the database alongside the event and is read-only in FluidCalendar. To change attendees, update the event in the originating calendar application.
+
+## Auto-scheduled tasks vs events
+
+Auto-scheduled tasks appear on the calendar as event-like blocks but are not calendar events — they are tasks with a scheduled time slot assigned by the auto-scheduler. Key differences:
+
+| | Calendar events | Auto-scheduled tasks |
+|---|---|---|
+| Created by | You, manually | Auto-scheduler |
+| Stored in | Calendar feed | Task store |
+| Edit via | Event modal | Task modal |
+| Recurrence | RRULE-based | Task recurrence rules |
+| Color source | Feed color | Task color |
+| Delete | Removes event | Removes task |
+
+Clicking an auto-scheduled task block on the calendar opens the task quick view, not the event modal. From there you can mark it complete, edit the task, or delete it.

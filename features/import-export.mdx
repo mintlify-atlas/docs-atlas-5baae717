@@ -1,0 +1,160 @@
+---
+title: "Import and export"
+description: "Export your FluidCalendar tasks, projects, and tags to a JSON file, or import them from a previously exported file."
+---
+
+FluidCalendar supports importing and exporting your task data as JSON files. This is useful for backups, migrating data between FluidCalendar instances, or bulk-editing tasks outside the application.
+
+<Note>
+  Import and export currently cover **tasks, projects, and tags**. Calendar events synchronized from Google Calendar, Outlook, or CalDAV are managed through those integrations and are not included in the JSON export.
+</Note>
+
+To access import and export, navigate to **Settings → Import / Export**.
+
+## Export format
+
+Exported data is a single JSON file with the following top-level structure:
+
+```json
+{
+  "metadata": {
+    "exportDate": "2024-01-15T10:30:00.000Z",
+    "version": "1.0",
+    "includeCompleted": false
+  },
+  "tasks": [ ... ],
+  "projects": [ ... ],
+  "tags": [ ... ]
+}
+```
+
+### What is included
+
+| Object | Included fields |
+|---|---|
+| Tasks | `title`, `description`, `status`, `dueDate`, `startDate`, `duration`, `priority`, `energyLevel`, `preferredTime`, `isAutoScheduled`, `scheduleLocked`, `scheduledStart`, `scheduledEnd`, `isRecurring`, `recurrenceRule`, `completedAt`, `postponedUntil`, `tags`, `projectId`, `createdAt`, `updatedAt` |
+| Projects | `name`, `description`, `color`, `status` |
+| Tags | `name`, `color` |
+
+Completed tasks (status `completed`) are excluded by default. Enable **Include completed tasks** in the export UI to include them.
+
+## Exporting your data
+
+<Steps>
+  <Step title="Open Import / Export settings">
+    Navigate to **Settings → Import / Export**.
+  </Step>
+  <Step title="Choose export options">
+    Check **Include completed tasks** if you want to export tasks with status `completed` in addition to active tasks.
+  </Step>
+  <Step title="Click Export Tasks">
+    Click the **Export Tasks** button. The browser downloads a JSON file named:
+
+    ```
+    fluid-calendar-tasks-YYYY-MM-DD.json
+    ```
+
+    where `YYYY-MM-DD` is today's date.
+  </Step>
+</Steps>
+
+The export file contains all your tasks, the projects they belong to, and all your tags.
+
+<Tip>
+  Export your data regularly as a backup strategy, especially before performing major changes like bulk task updates or clearing data.
+</Tip>
+
+## Importing data
+
+The import feature reads a FluidCalendar JSON export file and creates tasks, projects, and tags in your account.
+
+<Steps>
+  <Step title="Open Import / Export settings">
+    Navigate to **Settings → Import / Export**.
+  </Step>
+  <Step title="Click Import Tasks">
+    Click the **Import Tasks** button. A file picker opens.
+  </Step>
+  <Step title="Select your JSON file">
+    Choose a `.json` file previously exported from FluidCalendar.
+  </Step>
+  <Step title="Wait for the import to complete">
+    FluidCalendar parses the file and creates records. A success notification shows how many tasks were imported:
+
+    ```
+    Import successful: 42 tasks imported
+    ```
+  </Step>
+</Steps>
+
+### How import handles existing data
+
+| Scenario | Behavior |
+|---|---|
+| Tag with the same name already exists | Reuses the existing tag; does not create a duplicate |
+| Project with the same name already exists | Reuses the existing project; does not create a duplicate |
+| Task with a similar title already exists | Creates a new task; may result in duplicates |
+| Invalid or missing required fields on a task | That task is skipped; the rest continue importing |
+
+<Warning>
+  Importing does not delete or modify your existing tasks. If you import a file that was exported from the same account, you will end up with duplicate tasks. Use import for migration or restoration from a backup, not as a sync mechanism.
+</Warning>
+
+## Data portability use cases
+
+<AccordionGroup>
+  <Accordion title="Regular backups">
+    Export your tasks periodically and store the JSON files in a safe location (cloud storage, local backup, etc.). If you ever need to restore data, import the most recent backup file.
+
+    Combine with the [Data settings](/features/user-settings#data-settings) automatic backup feature for additional protection.
+  </Accordion>
+  <Accordion title="Migrating between FluidCalendar instances">
+    To move your data to a new self-hosted instance:
+
+    1. Export your tasks from the old instance (include completed tasks if you want full history).
+    2. Create your account on the new instance.
+    3. Import the exported file on the new instance.
+
+    Projects and tags are recreated automatically during import.
+  </Accordion>
+  <Accordion title="Bulk editing tasks">
+    Export your tasks to JSON, edit the file in a text editor or script, then import the modified file. Because import does not delete existing tasks, you may want to clear your tasks first or carefully review for duplicates after import.
+  </Accordion>
+  <Accordion title="Sharing task templates">
+    Create a set of template tasks and projects in FluidCalendar, export them, and share the JSON file with teammates who run their own instances. They can import the file to get the same project structure.
+  </Accordion>
+</AccordionGroup>
+
+## Accepted file format
+
+The import endpoint (`POST /api/import/tasks`) accepts a JSON file with the structure described in [Export format](#export-format). The minimum required structure is:
+
+```json
+{
+  "tasks": [
+    {
+      "title": "My task",
+      "status": "todo"
+    }
+  ]
+}
+```
+
+The `metadata`, `projects`, and `tags` fields are optional. Tasks that fail validation (missing `title` or `status`) are skipped without aborting the entire import.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="User settings" icon="user" href="/features/user-settings">
+    Configure automatic backups and data retention
+  </Card>
+  <Card title="Task management" icon="list-check" href="/features/task-management">
+    Learn how to manage tasks, projects, and tags
+  </Card>
+  <Card title="Auto-scheduling" icon="wand-magic-sparkles" href="/features/auto-scheduling">
+    Schedule tasks automatically across your calendar
+  </Card>
+  <Card title="System settings" icon="shield" href="/features/system-settings">
+    Admin configuration for your FluidCalendar instance
+  </Card>
+</CardGroup>
